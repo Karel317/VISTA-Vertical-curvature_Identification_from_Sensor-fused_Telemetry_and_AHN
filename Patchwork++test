@@ -1,5 +1,4 @@
-# lidar-ground-segmentation
-#code voorbeeld van claude (niet perse nuttig maar dient als snelle indruk van hoe soortgelijke code eruitziet):
+
 import pypatchworkpp
 import open3d as o3d
 import numpy as np
