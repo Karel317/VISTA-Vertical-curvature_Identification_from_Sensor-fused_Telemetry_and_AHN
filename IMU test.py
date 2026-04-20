@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import savgol_filter
 
-FILE_PATH = r"C:\Users\Leons\Downloads\back_front_left_right_0.mcap"  # 👈 only change this
 
-MODE = 1  # 👈 change to 1 or 2
+FILE_PATH = r"C:\Users\Leons\Downloads\back_front_left_right_0.mcap"  # CHANGE THIS, normally it will work for the other rosbags
+MODE = 1  # 1 is everything side-by-side, 2 is all pitch angles on one graph
 
 IMU_TOPICS = [
     "/zed_left/zed_node/imu/data",
@@ -15,7 +15,8 @@ IMU_TOPICS = [
     "/zed_back/zed_node/imu/data",
 ]
 
-# Storage for each camera
+# Storage for each cameras data, g is angular velocity, q is orientation quaternion, t is time in seconds
+# What is orientation quaternion? x y and z are the unit position vectors, w is the magnitude.
 data = {topic: {"t": [], "gx": [], "gy": [], "gz": [], "qx": [], "qy": [], "qz": [], "qw": []} for topic in IMU_TOPICS}
 
 print("Reading file...")
@@ -78,24 +79,28 @@ if MODE == 1:
         pitch = pitch - pitch[0]
         yaw   = yaw   - yaw[0]
 
-        # Smooth
+        # SMOOTHENS THE GRAPHS A LOT, BUT HELPS WITH VISUALIZATION. CAN BE REMOVED IF YOU WANT THE RAW DATA
+        # IF YOU WANT TO SMOOTHEN MORE OR LESS CHANGE WINDOW LENGTH (MUST BE ODD)
         roll  = savgol_filter(roll,  window_length=201, polyorder=3)
         pitch = savgol_filter(pitch, window_length=201, polyorder=3)
         yaw   = savgol_filter(yaw,   window_length=201, polyorder=3)
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 4))
+        #fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 4))
+        fig,  ax2 = plt.subplots(1, 1, figsize=(16, 4)) # only orientation, no angular velocity
+
         fig.suptitle(name, fontsize=14, fontweight="bold")
 
-        # Left — angular velocity
-        ax1.plot(t, pitch_rate, label="Pitch rate")
-        ax1.set_title("Angular Velocity")
-        ax1.set_xlabel("Time (s)")
-        ax1.set_ylabel("rad/s")
-        ax1.legend()
-        ax1.grid(True)
+        # Left — angular velocity  
+        #ax1.plot(t, pitch_rate, label="Pitch rate")
+        #ax1.set_title("Angular Velocity")
+        #ax1.set_xlabel("Time (s)")
+        #ax1.set_ylabel("rad/s")
+        #ax1.legend()
+        #ax1.grid(True)
 
         # Right — orientation from quaternion
         ax2.plot(t, pitch, label="Pitch")
+        #ax2.plot(t, roll,  label="Roll") # roll doesnt matter that much, every sensor is orientated the same way
         ax2.set_title("Orientation (from sensor, drift-free)")
         ax2.set_xlabel("Time (s)")
         ax2.set_ylabel("Degrees (°)")
