@@ -5,7 +5,7 @@ import numpy as np
 from scipy.signal import savgol_filter
 
 
-FILE_PATH = r"C:\Users\Leons\Downloads\back_front_left_right_0.mcap"  # CHANGE THIS, normally it will work for the other rosbags
+FILE_PATH = r"C:\Users\karel\Downloads\back_front_left_right_0.mcap" # CHANGE THIS, normally it will work for the other rosbags
 MODE = 1  # 1 is everything side-by-side, 2 is all pitch angles on one graph
 
 IMU_TOPICS = [
@@ -91,10 +91,10 @@ if MODE == 1:
         # SMOOTHENS THE GRAPHS A LOT, BUT HELPS WITH VISUALIZATION. CAN BE REMOVED IF YOU WANT THE RAW DATA
         # IF YOU WANT TO SMOOTHEN MORE OR LESS CHANGE WINDOW LENGTH (MUST BE ODD)
         roll  = savgol_filter(roll,  window_length=201, polyorder=3)
-        pitch = savgol_filter(pitch, window_length=201, polyorder=3)
+        pitch = savgol_filter(pitch, window_length=501, polyorder=3)
         yaw   = savgol_filter(yaw,   window_length=201, polyorder=3)
         vx = np.cumsum(ax) * np.mean(np.diff(t))
-        curve = abs(pitch_rate * vx)  # angular velocity * forward velocity  = [1/m] so should be curvature kappa
+        curve = pitch_rate / vx  # angular velocity * forward velocity  = [1/m] so should be curvature kappa
         curve = savgol_filter(curve, window_length=201, polyorder=3)  # smoothen curvature for better visualization
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 4))
         #fig,  ax2 = plt.subplots(1, 1, figsize=(16, 4)) # only orientation, no angular velocity
@@ -103,7 +103,7 @@ if MODE == 1:
 
         # Left — angular velocity  
         ax1.plot(t, curve, label="Pitch rate")
-        ax1.set_title("Angular Velocity")
+        ax1.set_title("Curvature (1/m)")
         ax1.set_xlabel("Time (s)")
         ax1.set_ylabel("rad/s")
         ax1.legend()
