@@ -5,7 +5,7 @@ import numpy as np
 from scipy.signal import savgol_filter
 
 
-FILE_PATH = r"C:\Users\Leons\Downloads\back_front_left_right_0.mcap"  # CHANGE THIS, normally it will work for the other rosbags
+FILE_PATH = r"C:\Users\karel\Downloads\back_front_left_right_0.mcap" # CHANGE THIS, normally it will work for the other rosbags
 MODE = 1  # 1 is everything side-by-side, 2 is all pitch angles on one graph
 
 IMU_TOPICS = [
@@ -17,7 +17,7 @@ IMU_TOPICS = [
 
 # Storage for each cameras data, g is angular velocity, q is orientation quaternion, t is time in seconds
 # What is orientation quaternion? x y and z are the unit position vectors, w is the magnitude.
-data = {topic: {"t": [], "gx": [], "gy": [], "gz": [], "qx": [], "qy": [], "qz": [], "qw": []} for topic in IMU_TOPICS}
+data = {topic: {"t": [],"ax": [], "ay": [], "az": [], "gx": [], "gy": [], "gz": [], "qx": [], "qy": [], "qz": [], "qw": []} for topic in IMU_TOPICS}
 
 print("Reading file...")
 with open(FILE_PATH, "rb") as f:
@@ -26,6 +26,9 @@ with open(FILE_PATH, "rb") as f:
         if channel.topic in IMU_TOPICS:
             d = data[channel.topic]
             d["t"].append(message.publish_time / 1e9)
+            d["ax"].append(ros_msg.linear_acceleration.x)
+            d["ay"].append(ros_msg.linear_acceleration.y)
+            d["az"].append(ros_msg.linear_acceleration.z)
             d["gx"].append(ros_msg.angular_velocity.x)
             d["gy"].append(ros_msg.angular_velocity.y)
             d["gz"].append(ros_msg.angular_velocity.z)
@@ -35,6 +38,12 @@ with open(FILE_PATH, "rb") as f:
             d["qw"].append(ros_msg.orientation.w)
 print("Done reading!")
 
+def acceleration_to_velocity(ax, ay, az, t):
+    """Integrate acceleration to get velocity, assuming initial velocity is zero."""
+    vx = np.cumsum(ax) * np.mean(np.diff(t))
+    vy = np.cumsum(ay) * np.mean(np.diff(t))
+    vz = np.cumsum(az) * np.mean(np.diff(t))
+    return vx, vy, vz
 def quaternion_to_euler(qx, qy, qz, qw):
     """Convert quaternion arrays to roll, pitch, yaw in degrees."""
     qx, qy, qz, qw = np.array(qx), np.array(qy), np.array(qz), np.array(qw)
@@ -71,7 +80,7 @@ if MODE == 1:
         roll_rate  = np.array(d["gx"])
         pitch_rate = np.array(d["gy"])
         yaw_rate   = np.array(d["gz"])
-
+        ax = np.array(d["ax"])
         roll, pitch, yaw = quaternion_to_euler(d["qx"], d["qy"], d["qz"], d["qw"])
 
         # Normalize angles relative to starting position
@@ -82,21 +91,23 @@ if MODE == 1:
         # SMOOTHENS THE GRAPHS A LOT, BUT HELPS WITH VISUALIZATION. CAN BE REMOVED IF YOU WANT THE RAW DATA
         # IF YOU WANT TO SMOOTHEN MORE OR LESS CHANGE WINDOW LENGTH (MUST BE ODD)
         roll  = savgol_filter(roll,  window_length=201, polyorder=3)
-        pitch = savgol_filter(pitch, window_length=201, polyorder=3)
+        pitch = savgol_filter(pitch, window_length=501, polyorder=3)
         yaw   = savgol_filter(yaw,   window_length=201, polyorder=3)
-
-        #fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 4))
-        fig,  ax2 = plt.subplots(1, 1, figsize=(16, 4)) # only orientation, no angular velocity
+        vx = np.cumsum(ax) * np.mean(np.diff(t))
+        curve = pitch_rate / vx  # angular velocity * forward velocity  = [1/m] so should be curvature kappa
+        curve = savgol_filter(curve, window_length=201, polyorder=3)  # smoothen curvature for better visualization
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 4))
+        #fig,  ax2 = plt.subplots(1, 1, figsize=(16, 4)) # only orientation, no angular velocity
 
         fig.suptitle(name, fontsize=14, fontweight="bold")
 
         # Left — angular velocity  
-        #ax1.plot(t, pitch_rate, label="Pitch rate")
-        #ax1.set_title("Angular Velocity")
-        #ax1.set_xlabel("Time (s)")
-        #ax1.set_ylabel("rad/s")
-        #ax1.legend()
-        #ax1.grid(True)
+        ax1.plot(t, curve, label="Pitch rate")
+        ax1.set_title("Curvature (1/m)")
+        ax1.set_xlabel("Time (s)")
+        ax1.set_ylabel("rad/s")
+        ax1.legend()
+        ax1.grid(True)
 
         # Right — orientation from quaternion
         ax2.plot(t, pitch, label="Pitch")
