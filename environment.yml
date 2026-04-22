@@ -1,9 +1,6 @@
 name: lidar-env
 channels:
   - defaults
-  - https://repo.anaconda.com/pkgs/main
-  - https://repo.anaconda.com/pkgs/r
-  - https://repo.anaconda.com/pkgs/msys2
 dependencies:
   - bzip2=1.0.8=h2bbff1b_6
   - ca-certificates=2026.3.19=haa95532_0
@@ -130,6 +127,7 @@ dependencies:
       - rfc3987-syntax==1.1.0
       - rpds-py==0.30.0
       - scipy==1.15.3
+      - seaborn==0.13.2
       - send2trash==2.1.0
       - six==1.17.0
       - soupsieve==2.8.3
@@ -151,4 +149,4 @@ dependencies:
       - widgetsnbextension==4.0.15
       - zipp==3.23.1
       - zstandard==0.25.0
-prefix: C:\Users\Leons\anaconda3\envs\lidar-env
+prefix: C:\Users\Lars Wissink\annaconda\envs\lidar-env
