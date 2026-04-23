@@ -189,4 +189,4 @@ for topic in IMU_TOPICS:
     ax3.grid(True)
 
     plt.tight_layout()
-plot.show()
+plt.show()
