@@ -105,7 +105,7 @@ dependencies:
       - nest-asyncio==1.6.0
       - notebook==7.5.5
       - notebook-shim==0.2.4
-      - numpy==1.26.4
+      - numpy==2.2.6
       - open3d==0.19.0
       - overrides==7.7.0
       - pandas==2.3.3
@@ -120,6 +120,8 @@ dependencies:
       - pure-eval==0.2.3
       - pycparser==3.0
       - pygments==2.20.0
+      - pyopengl==3.1.6
+      - pyopengl-accelerate==3.1.6
       - pyparsing==3.3.2
       - pypatchworkpp==1.0.4
       - pyproj==3.7.1
@@ -128,6 +130,7 @@ dependencies:
       - pytz==2026.1.post1
       - pywinpty==3.0.3
       - pyyaml==6.0.3
+      - pyzed==5.2
       - pyzmq==27.1.0
       - rasterio==1.4.4
       - referencing==0.37.0
