@@ -7,8 +7,8 @@ from scipy.signal import savgol_filter
 # ----------------- CONFIGURATION --------------------------
 
 # Change these file paths!!
-IMU_FILE_PATH = r"C:\Users\Leons\Downloads\back_front_left_right_0.mcap" # Contains the ZED IMU data
-GPS_FILE_PATH = r"C:\Users\Leons\Downloads\rosbag_0.mcap" # Contains the GPS / Odometry data
+IMU_FILE_PATH = r"C:\ROSBAGS VERWIJDER NA BEP\back_front_left_right_0.mcap" # Contains the ZED IMU data
+GPS_FILE_PATH = r"C:\ROSBAGS VERWIJDER NA BEP\rosbag_0.mcap" # Contains the GPS / Odometry data
 
 IMU_TOPICS = [
     "/zed_left/zed_node/imu/data",
@@ -26,7 +26,7 @@ gps_data = {"t": [], "v": []}
 # ------------------- FILE READING --------------------------
 print("Reading IMU file...")
 try:
-    with open(IMU_FILE_PATH, "rb") as f: # Opens the file in reading binary ("rd") mode and calls it f
+    with open(IMU_FILE_PATH, "rb") as f: # Opens the file in reading binary ("rb    ") mode and calls it f
         reader = make_reader(f, decoder_factories=[DecoderFactory()]) # Decodes the binary into python objects
         for schema, channel, message, ros_msg in reader.iter_decoded_messages(): 
             # schema: Describes the structure of the data
@@ -95,12 +95,11 @@ def kalman_filter_velocity(ax, t, v_gps, t_gps):
     for i in range(1, len(t)):
         dt = t[i] - t[i-1]
         v = v + (ax[i] * dt)
-        P = P + Q
+        P = P + Q * dt
         K = P / (P + R)  
         v = v + K * (v_gps_interp[i] - v)
         P = (1 - K) * P
         v_fused[i] = v
-        
     return v_fused
 
 def calculate_elevation(speed_array, pitch_deg, t_plot):
@@ -189,4 +188,4 @@ for topic in IMU_TOPICS:
     ax3.grid(True)
 
     plt.tight_layout()
-plot.show()
+plt.show()
