@@ -35,19 +35,21 @@ import sys
 # SETTINGS — edit these before running
 # =============================================================================
 
-INPUT_FILE = "your_file.mcap"    # <-- change to your actual file path
+INPUT_FILE = r'C:\ROSBAGS VERWIJDER NA BEP\rosbag_0.mcap'
 
 # For .mcap / .bag files only:
 #   Set this to the ROS topic that contains LiDAR data.
 #   If you don't know the topic name, set it to None and run the script —
 #   it will print all available topics so you can pick the right one.
 #   Common names: "/lidar/points"  "/velodyne_points"  "/os_cloud_node/points"
-LIDAR_TOPIC = None
+LIDAR_TOPIC_1 = "/rslidar/M1P_deskewed"
+LIDAR_TOPIC_2 = "/rslidar/helios_R"
+LIDAR_TOPIC_3 = "/rslidar/helios_L"
 
 # For .mcap / .bag files only:
 #   Which scan frame to use. 0 = first frame, 1 = second frame, etc.
 #   Set to "all" to merge every frame into one large point cloud.
-FRAME_INDEX = 0
+FRAME_INDEX = 860
 
 # CSF tuning parameters:
 #   cloth_resolution — grid cell size in meters
@@ -112,9 +114,8 @@ def load_pointcloud(filepath, lidar_topic=None, frame_index=0):
 
     # --- .bin (Velodyne / KITTI) ---
     elif ext == ".bin":
-        # Binary layout: repeated blocks of float32 (x, y, z, intensity)
         data = np.fromfile(filepath, dtype=np.float32).reshape(-1, 4)
-        return data[:, :3]   # drop intensity, keep x y z
+        return data[:, :3]
 
     # --- .mcap (ROS2) ---
     elif ext == ".mcap":
@@ -134,30 +135,32 @@ def load_pointcloud(filepath, lidar_topic=None, frame_index=0):
 
 def _load_mcap(filepath, topic, frame_index):
     try:
-        from mcap_ros2.reader import read_bag_messages
         from mcap.reader import make_reader
+        from mcap_ros2.decoder import DecoderFactory
     except ImportError:
         print("  ERROR: mcap libraries not installed.")
         print("  Run:  pip install mcap mcap-ros2-support")
         sys.exit(1)
 
-    # If no topic given, print all topics and exit so the user can choose
-    if topic is None:
-        print("\n  LIDAR_TOPIC is not set. Available topics in this file:")
-        with open(filepath, "rb") as f:
-            reader = make_reader(f)
+    with open(filepath, "rb") as f:
+        reader = make_reader(f, decoder_factories=[DecoderFactory()])
+
+        # If no topic given, print all available topics and exit
+        if topic is None:
+            print("\n  LIDAR_TOPIC is not set. Available topics in this file:")
             summary = reader.get_summary()
             for ch in summary.channels.values():
                 n = summary.statistics.channel_message_counts.get(ch.id, "?")
-                print(f"    {ch.topic}  —  {n} messages  [{ch.schema.name}]")
-        print("\n  Set LIDAR_TOPIC at the top of this script and run again.")
-        sys.exit(0)
+                schema_name = summary.schemas.get(ch.schema_id, None)
+                schema_str = schema_name.name if schema_name else "unknown"
+                print(f"    {ch.topic}  —  {n} messages  [{schema_str}]")
+            print("\n  Set LIDAR_TOPIC at the top of this script and run again.")
+            sys.exit(0)
 
-    print(f"      Extracting topic '{topic}' ...")
-    frames = []
-    with open(filepath, "rb") as f:
-        for msg in read_bag_messages(f, topics=[topic]):
-            pts = _ros_pc2_to_numpy(msg.ros_msg)
+        print(f"      Extracting topic '{topic}' ...")
+        frames = []
+        for schema, channel, message, ros_msg in reader.iter_decoded_messages(topics=[topic]):
+            pts = _ros_pc2_to_numpy(ros_msg)
             if pts is not None and len(pts) > 0:
                 frames.append(pts)
 
