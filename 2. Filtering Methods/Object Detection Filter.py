@@ -44,7 +44,7 @@ import open3d as o3d
 #  SETTINGS  --  edit these before running
 # =============================================================================
 
-INPUT_FILE = "your_file.bin"      # path to your .bin / .mcap / .ply / .pcd file
+INPUT_FILE = "/mnt/c/Users/karel/Downloads/pointcloud.bin"   # path to your .bin / .mcap / .ply / .pcd file
 
 LIDAR_TOPIC = None                # for .mcap/.bag: ROS topic name, or None to list
 FRAME_INDEX = 0                   # which frame to use, or "all" to merge
@@ -240,8 +240,10 @@ def segment_ground(points):
     """Return per-point class labels using the pre-trained RandLA-Net model."""
     try:
         import open3d.ml.torch as ml3d
-    except ImportError:
-        sys.exit("  ERROR: open3d-ml missing.  pip install open3d-ml")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        sys.exit(f"  ERROR importing open3d.ml.torch: {e}")
 
     if not os.path.exists(CHECKPOINT_PATH):
         print(f"      Downloading model weights (~20MB) ...")
