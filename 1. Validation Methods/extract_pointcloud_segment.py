@@ -1,3 +1,7 @@
+# TODO
+# Not finished, it does work but its so many points and it saves a 1.5gb file in the repo
+# I need to downsample the point cloud, maybe compress it too
+#
 from pathlib import Path
 import numpy as np
 import open3d as o3d

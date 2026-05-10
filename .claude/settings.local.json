@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "WebFetch(domain:www.stereolabs.com)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

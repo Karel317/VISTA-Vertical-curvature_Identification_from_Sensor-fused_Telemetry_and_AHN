@@ -16,6 +16,12 @@ from pathlib import Path
 import pyzed.sl as sl
 from mcap.writer import Writer as McapWriter
 
+# ── Hardcoded paths (set these to run directly from IDE) ─────────────────────
+# Leave SVO_PATH as an empty string to use command-line arguments instead.
+
+SVO_PATH = r"D:\Data_gathered\2026_04_28\Camera\17_30_00\back_28_04_2026-17_30_00.svo2"     # e.g. r"C:\recordings\my_recording.svo"
+OUTPUT_PATH = r""    # leave empty to auto-generate alongside the SVO file
+
 
 # ── ROS2 message definitions (ros2msg schema encoding) ───────────────────────
 
@@ -149,14 +155,6 @@ def encode_pose_stamped(
     e.float64(qx); e.float64(qy); e.float64(qz); e.float64(qw)
     return e.to_bytes()
 
-
-# ── Hardcoded paths (set these to run directly from IDE) ─────────────────────
-# Leave SVO_PATH as an empty string to use command-line arguments instead.
-
-SVO_PATH = r"D:\Camera\28 april\17_30_00\back_28_04_2026-17_30_00.svo2"     # e.g. r"C:\recordings\my_recording.svo"
-OUTPUT_PATH = r""    # leave empty to auto-generate alongside the SVO file
-
-
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -185,6 +183,7 @@ def main() -> None:
     init_params.set_from_svo_file(str(svo_path))
     init_params.coordinate_units = sl.UNIT.METER
     init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Z_UP  # ROS2 REP-103
+    init_params.depth_mode = sl.DEPTH_MODE.NEURAL_PLUS  # GEN 3
     init_params.svo_real_time_mode = False  # process every frame as fast as possible
 
     status = zed.open(init_params)
