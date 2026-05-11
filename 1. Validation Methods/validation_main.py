@@ -5,15 +5,16 @@ import scipy.interpolate as sc
 import matplotlib.pyplot as plt
 
 date_folder = "2026_05_01"
-time_folder = "14_20_00"
+time_folder = "14_40_00"
 RESULTS_DIR = os.path.join(r"D:\Validation_results", date_folder, time_folder)
 
 # ── List the result files to load (filenames without .npz extension) ──────────
 VALIDATION_FILES = [
-    "AHN4_strip_1777638090",
+    "height-deriv_1777639",
 ]
 CALCULATION_FILES = [
-    "AHN4_strip_1777638090",
+    "PCA_1777639",
+    "RANSAC_1777639",
 ]
 
 SMOOTHENING_FACTOR = 0  # Adjust as needed (0 = no smoothing, higher = more smoothing)
