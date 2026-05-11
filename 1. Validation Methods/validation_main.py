@@ -153,7 +153,10 @@ ax_z.grid(True)
 ax_k.set_xlabel("x (m)")
 ax_k.set_ylabel("κ (1/m)")
 ax_k.set_title("Curvature profile")
-ax_k.legend()
+ax_k.legend(
+
+
+)
 ax_k.grid(True)
 
 if comparisons:
