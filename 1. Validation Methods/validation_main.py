@@ -54,16 +54,16 @@ try:
             "x":     data["x"],
             "y":     data["y"],
             "z":     data["z"],
-            "kappa": data["kappa"],
+            "s":     data["s"],
             "t":     data["t"],
         }
-        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "kappa", "t", "method")]
+        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "method")]
         extras = {k: data[k] for k in extra_keys}
 
         results_calculation[method] = {**core, **extras}
         print(f"Loaded: {method}")
         print(f"  Core   : x{data['x'].shape}, y{data['y'].shape}, z{data['z'].shape}, "
-            f"kappa{data['kappa'].shape}, t={float(data['t'][0]):.2f}")
+            f"s{data['s'].shape}, t={float(data['t'][0]):.2f}")
         if extras:
             print(f"  Extras : {list(extras.keys())}")
 except FileNotFoundError:
@@ -72,8 +72,8 @@ except FileNotFoundError:
 
 # ── Spline fitting ────────────────────────────────────────────────────────────
 for d in list(results_validation.values()) + list(results_calculation.values()):
-    d["spline_z"]     = sc.make_splrep(d["x"], d["z"],     s=SMOOTHENING_FACTOR)
-    d["spline_kappa"] = sc.make_splrep(d["x"], d["kappa"], s=SMOOTHENING_FACTOR)
+    d["spline_z"]     = sc.make_splrep(d["s"], d["z"],     s=SMOOTHENING_FACTOR)
+    #d["spline_s"]     = sc.make_splrep(d["x"], d["s"],     s=SMOOTHENING_FACTOR)
 
 # ── Per-method statistics ─────────────────────────────────────────────────────
 print("\n── Per-method spline statistics ──────────────────────────────────────")
@@ -84,12 +84,18 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
         if key in seen:
             continue
         seen.add(key)
-        x, z, kappa = d["x"], d["z"], d["kappa"]
+        x, y, z, s = d["x"],d["y"] d["z"], d["s"]
+        if s is not None:
+            distance = s
+        else:
+            distance = np.hypot(np.diff(x)**2, np.diff(y)**2)
+
+        sp = sc.make_splrep(distance, z, s=SMOOTHENING_FACTOR)
         sp_z = d["spline_z"]
         sp_k = d["spline_kappa"]
         x_lin = np.linspace(x[0], x[-1], 1000)
-        area_z     = np.trapz(sp_z(x_lin), x_lin)
-        area_kappa = np.trapz(sp_k(x_lin), x_lin)
+        area_z     = np.trapezoid(sp_z(x_lin), x_lin)
+        area_kappa = np.trapezoid(sp_k(x_lin), x_lin)
         z_fit      = sp_z(x)
         rmse       = np.sqrt(np.mean((z_fit - z) ** 2))
         max_diff   = np.max(np.abs(z_fit - z))
