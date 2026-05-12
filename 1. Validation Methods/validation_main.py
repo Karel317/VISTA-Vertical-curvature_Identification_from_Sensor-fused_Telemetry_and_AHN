@@ -5,15 +5,20 @@ import scipy.interpolate as sc
 import matplotlib.pyplot as plt
 
 date_folder = "2026_05_01"
-time_folder = "14_20_00"
+time_folder = "14_30_00"
 RESULTS_DIR = os.path.join(r"D:\Validation_results", date_folder, time_folder)
 
 # ── List the result files to load (filenames without .npz extension) ──────────
 VALIDATION_FILES = [
-    "AHN4_strip_1777638090",
+    "AHN4_strip_1777638690",
+    "GPS_AHN4_validation_1777638690.2496657",
+    "IMU_validation_1777638690.2496657",
+    "KISS_ICP_1777638690.2496657"
 ]
 CALCULATION_FILES = [
-    "AHN4_strip_1777638090",
+    #"height-deriv_1777639270",
+    "PCA_1777638690",
+    "RANSAC_1777638690",
 ]
 
 SMOOTHENING_FACTOR = 0  # Adjust as needed (0 = no smoothing, higher = more smoothing)
@@ -82,27 +87,42 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
             continue
         seen.add(key)
         x, y, z, s = d["x"],d["y"], d["z"], d["s"]
+
         if s is not None:
             distance = s
         else:
             distance = np.hypot(np.diff(x)**2, np.diff(y)**2)
 
+        if z is None or np.ndim(z) == 0 or np.size(z) == 0:
+            print(f"Warning: No z data for {label} - {method}, Calculating with slope")
+            slope_deg = d["slope_deg"]
+            delta_distance = np.concatenate([[0], np.cumsum(distance)])
+            z = np.tan(np.radians(slope_deg)) * np.diff(delta_distance)
+            store[method]["z"] = z
+
+            #z = np.concatenate([[0], np.cumsum(z)])
+        
+        valid = np.isfinite(z)
+        z, distance = z[valid], distance[valid]
         sp_z = sc.make_splrep(distance, z, s=SMOOTHENING_FACTOR)
-
-        # Get the derivatives analytically
-        dzds = sp_z.derivative(nu=1)(distance)
-        slope_deg = np.degrees(np.arctan(dzds))
-        d2zds2 = sp_z.derivative(nu=2)(distance)
-        kappa = abs(d2zds2) / (1.0 + dzds ** 2) ** 1.5
-
+        if d.get("kappa") is not None:
+            kappa = d["kappa"]
+        else:
+            # Get the derivatives analytically
+            dzds = sp_z.derivative(nu=1)(distance)
+            slope_deg = np.degrees(np.arctan(dzds))
+            d2zds2 = sp_z.derivative(nu=2)(distance)
+            kappa = abs(d2zds2) / (1.0 + dzds ** 2) ** 1.5
+            
         sp_k = sc.make_splrep(distance, kappa, s=SMOOTHENING_FACTOR)
         store[method]["spline_z"] = sp_z
         store[method]["spline_kappa"] = sp_k
         store[method]["kappa"] = kappa
         store[method]["distance"] = distance
+        store[method]["z"] = z
         dist_lin = np.linspace(distance[0], distance[-1], 1000)
-        area_z     = np.trapezoid(sp_z(dist_lin), dist_lin)
-        area_kappa = np.trapezoid(sp_k(dist_lin), dist_lin)
+        area_z     = np.trapezoid(np.abs(sp_z(dist_lin)), dist_lin) #TODO I NEED THIS AB
+        area_kappa = np.trapezoid(np.abs(sp_k(dist_lin)), dist_lin)
 
         z_spline      = sp_z(distance) # The spline evaluated at the original positions
         rmse       = np.sqrt(np.mean((z_spline - z) ** 2))
@@ -150,7 +170,6 @@ for label, store, marker, ls in [
         plotted.add(tag)
         c   = colors[color_idx % len(colors)]
         dist_lin = np.linspace(d["distance"][0], d["distance"][-1], 500)
-
         ax_z.scatter(d["distance"], d["z"],           s=25, color=c, marker=marker, zorder=3)
         ax_z.plot(dist_lin, d["spline_z"](dist_lin),    color=c, linestyle=ls, label=tag)
         ax_k.scatter(d["distance"], d["kappa"],        s=25, color=c, marker=marker, zorder=3)
@@ -175,7 +194,7 @@ if comparisons:
     ax_d = axes[2]
     for vm, cm, x_cmp, diff, rmse, max_d in comparisons:
         ax_d.plot(x_cmp, diff,
-                  label=f"{vm} − {cm}  (RMSE={rmse:.4f} m, max={max_d:.4f} m)")
+                  label=f"{vm} − {cm}")
     ax_d.axhline(0, color="k", linewidth=0.8, linestyle="--")
     ax_d.set_xlabel("x (m)")
     ax_d.set_ylabel("Δz (m)")
@@ -183,6 +202,6 @@ if comparisons:
     ax_d.legend()
     ax_d.grid(True)
 
-plt.tight_layout()
+plt.tight_layout(h_pad=6)
 plt.show()
 
