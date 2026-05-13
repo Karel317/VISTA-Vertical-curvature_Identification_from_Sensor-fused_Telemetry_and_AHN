@@ -1,4 +1,4 @@
-# LiDAR Ground Segmentation with Vertical Curvature (MET CLAUDE GESCHREVEN EN LOET NOG BEKEKEN EN AANGEPAST WORDEN°
+# LiDAR Ground Segmentation with Vertical Curvature (MET CLAUDE GESCHREVEN EN LOET NOG BEKEKEN EN AANGEPAST WORDEN)
 
 A LiDAR-based ground segmentation pipeline that builds a dataset with vertical curvature and accurately identifies that curvature in 3D point clouds.
 
