@@ -9,11 +9,17 @@ from scipy.spatial.transform import Rotation, Slerp
 from mcap.reader import make_reader
 from mcap_ros2.decoder import DecoderFactory
 
+
 # =============================================================================
 # SETTINGS
 # =============================================================================
 
-DATASET_PATH = Path(r"D:\Rosbags\29 april\2026_04_29\15_20_00\rosbag\rosbag_0.mcap")
+#DATASET_PATH = Path(r"C:\Users\aitha\OneDrive\Bureaublad\Systeem en regeltechnieken\lidar-ground-segmentation\1. Validation Methods\KISS ICP\KISS ICP results\2026_04_29 15_20_00\poses.npy")
+#OUTPUT_PATH = Path(r"C:\ROSBAGS VERWIJDER NA BEP\output")
+
+DATASET_PATH = Path(r"C:\ROSBAGS VERWIJDER NA BEP\29 april\2026_04_29\15_20_00\rosbag\rosbag_0.mcap")
+RESULTS_DIR  = Path(r"C:\Users\aitha\OneDrive\Bureaublad\Systeem en regeltechnieken\lidar-ground-segmentation\1. Validation Methods\KISS ICP\KISS ICP results\2026_04_29 15_20_00")
+OUTPUT_DIR   = Path(r"C:\ROSBAGS VERWIJDER NA BEP\output")
 
 T_START     = 1777468956.122513909   # paste begin timestamp from Foxglove
 T_END       = 1777468976.117642921   # paste end timestamp from Foxglove
@@ -47,13 +53,6 @@ SENSOR_TRANSFORMS = {
 # =============================================================================
 # RESULTS DIRECTORY  (same naming as run_kiss_icp.py)
 # =============================================================================
-
-SCRIPT_DIR = Path(__file__).parent
-_date = DATASET_PATH.parts[-4]   # e.g. "29 april"
-_time = DATASET_PATH.parts[-3]   # e.g. "15_20_00"
-RESULTS_DIR = SCRIPT_DIR / "KISS ICP results" / f"{_date} {_time}"
-
-OUTPUT_PATH = RESULTS_DIR / f"segment_{T_START:.0f}_{T_END:.0f}.ply"
 
 # =============================================================================
 # HELPERS
@@ -199,14 +198,68 @@ for topic, count in scan_counts.items():
 if not all_points:
     print("\nNo points found — check T_START / T_END against the bag timestamps.")
 else:
+    cloud = np.vstack(all_points)
+    
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(cloud.astype(np.float64))
+    o3d.visualization.draw_geometries([pcd], window_name="Merged Point Cloud")
+    print(f"\nTotal points: {len(cloud):,}")
     # ==========================================================================
-    # STEP 6 — Save PLY
+    # STEP 6 — Save mcap
     # ==========================================================================
+from mcap.writer import Writer
+from mcap_ros2.writer import Writer as Ros2Writer
+import struct
+print([m for m in dir(Ros2Writer) if not m.startswith("_")])
+# ... (keep everything above Step 6 the same)
+
+if not all_points:
+    print("\nNo points found — check T_START / T_END against the bag timestamps.")
+else:
+    from mcap_ros2.writer import Writer as Ros2Writer
+    import struct
 
     cloud = np.vstack(all_points)
     print(f"\nTotal points: {len(cloud):,}")
 
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(cloud.astype(np.float64))
-    o3d.io.write_point_cloud(str(OUTPUT_PATH), pcd)
-    print("File Saved to")
+    mcap_out = OUTPUT_DIR / f"segment_{T_START:.0f}_{T_END:.0f}.mcap"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    def make_pointcloud2_bytes(points_xyz, stamp_sec, stamp_nsec):
+        n          = len(points_xyz)
+        point_step = 12
+        row_step   = n * point_step
+        data       = points_xyz.astype(np.float32).tobytes()
+
+        header       = struct.pack("<I", 0x00000001)
+        ros_header   = struct.pack("<II", stamp_sec, stamp_nsec)
+        frame_id     = b"map\x00"
+        frame_id_len = struct.pack("<I", len(frame_id))
+
+        def pack_field(name, offset, datatype, count):
+            name_b = name.encode() + b"\x00"
+            return struct.pack("<I", len(name_b)) + name_b + struct.pack("<IBI", offset, datatype, count)
+
+        fields       = pack_field("x", 0, 7, 1) + pack_field("y", 4, 7, 1) + pack_field("z", 8, 7, 1)
+        fields_count = struct.pack("<I", 3)
+        meta         = struct.pack("<??IIIi", False, False, 1, n, point_step, row_step)
+        data_len     = struct.pack("<I", len(data))
+
+        return header + ros_header + frame_id_len + frame_id + fields_count + fields + meta + data_len + data
+
+    stamp_sec  = int(T_START)
+    stamp_nsec = int((T_START % 1) * 1e9)
+    msg_bytes  = make_pointcloud2_bytes(cloud, stamp_sec, stamp_nsec)
+
+    with open(mcap_out, "wb") as f:
+        with Ros2Writer(output=f) as writer:
+            schema = writer.register_msgdef("sensor_msgs/msg/PointCloud2", "")
+            writer.write_message(
+                topic="/merged_cloud",
+                schema=schema,
+                message=msg_bytes,
+                log_time=int(T_START * 1e9),
+                publish_time=int(T_START * 1e9),
+            )
+
+    print(f"MCAP saved to {mcap_out}")
