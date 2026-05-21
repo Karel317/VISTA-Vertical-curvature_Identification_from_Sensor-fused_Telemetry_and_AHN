@@ -22,11 +22,12 @@ lidar-ground-segmentation/
 ├── 2. Filtering Methods/           # Ground segmentation methods
 ├── 3. Curvature Calculation/       # Calculation methods that identify and quantify vertical curvature
 ├── 4. Filtering+Calculation/       # All-in one segmentation and calculation methods
-├── .gitattributes                  #
+├── .gitattributes
 ├── .mcap_to_.bin.ipynb             # .mcap to .bin format converter
+├── IMU SVO to MCAP.py              # .svo to .mcap format converter
 ├── README.md
-├── environment.yml                 #
-└── requirements.txt                #
+├── environment.yml
+└── requirements.txt                # pip requirements
 ```
 
 
