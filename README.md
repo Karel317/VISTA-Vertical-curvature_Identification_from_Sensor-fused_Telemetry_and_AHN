@@ -10,29 +10,21 @@ This repository accompanies a Bachelor's End Thesis conducted at **Delft Univers
 
 Traditional ground segmentation methods often assume a flat or near-flat ground plane, which fails on terrain with vertical curvature (hills, slopes, road crests, valleys, etc.). This project addresses that gap by:
 
-- Building a labeled LiDAR dataset that explicitly includes vertical curvature
-- Developing and evaluating a segmentation method that identifies curved ground accurately
+- Building a LiDAR dataset that explicitly includes vertical curvature
+- Applying filtering methods that identify curved ground accurately
 - Providing reproducible scripts and notebooks for analysis and visualization
-
-> _TODO: Add a 1–2 sentence summary of your specific contribution / main result._
-
----
 
 ## 📁 Repository Structure
 
 ```
 lidar-ground-segmentation/
-├── notebooks/          # Jupyter notebooks for exploration and visualization
-├── src/                # Python source code (segmentation, utils, etc.)
-├── data/               # (Not included) place dataset here — see Dataset section
-├── results/            # Output figures, segmented clouds, evaluation metrics
-├── requirements.txt    # Python dependencies
+├── 1. Validation/                  # Scripts that validate the curvature calculation from "3. Curvature Calculation"
+├── 2. Filtering Methods/           # Ground segmentation methods
+├── 3. Curvature Calculation/       # Calculation methods that identify and quantify vertical curvature
+├── 4. Filtering+Calculation/       # All-in one segmentation and calculation methods        
 └── README.md
 ```
 
-> _TODO: Replace this tree with your actual folder layout. List each main file with a one-line description._
-
----
 
 ## ⚙️ Installation
 
