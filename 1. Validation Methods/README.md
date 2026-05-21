@@ -1,5 +1,3 @@
-Files explained:
-
 # Main file:
 - validation_main.py [NOT DONE]
   Script imports results from .npz files calculates validation metrics
