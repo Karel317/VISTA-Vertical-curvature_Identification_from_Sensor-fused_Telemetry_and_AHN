@@ -87,7 +87,7 @@ For the full methodology, see the thesis report: `[link or filename of thesis PD
 
 ## 👤 Author
 
-**Karel** — Bachelor's End Thesis  
+**Karel Peuskens, Jonas Repa, Rayan Ait Hadj Brahim, Lars Wissink, Leon Sinnesael** — Bachelor's End Thesis  
 Department of Cognitive Robotics, Delft University of Technology
 
 Supervisor: Dr. H. Caesar
