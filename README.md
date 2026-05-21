@@ -21,7 +21,6 @@ lidar-ground-segmentation/
 ├── 1. Validation/                  # Scripts that validate the curvature calculation from "3. Curvature Calculation"
 ├── 2. Filtering Methods/           # Ground segmentation methods
 ├── 3. Curvature Calculation/       # Calculation methods that identify and quantify vertical curvature
-├── 4. Filtering+Calculation/       # All-in one segmentation and calculation methods
 ├── .gitattributes
 ├── .mcap_to_.bin.ipynb             # .mcap to .bin format converter
 ├── IMU SVO to MCAP.py              # .svo to .mcap format converter
@@ -90,7 +89,7 @@ For the full methodology, see the thesis report: `[link or filename of thesis PD
 
 ---
 
-## 👤 Author
+## 👤 Authors
 
 **Karel Peuskens, Jonas Repa, Rayan Ait Hadj Brahim, Lars Wissink, Leon Sinnesael** — Bachelor's End Thesis  
 Department of Cognitive Robotics, Delft University of Technology
