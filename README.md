@@ -21,8 +21,12 @@ lidar-ground-segmentation/
 ├── 1. Validation/                  # Scripts that validate the curvature calculation from "3. Curvature Calculation"
 ├── 2. Filtering Methods/           # Ground segmentation methods
 ├── 3. Curvature Calculation/       # Calculation methods that identify and quantify vertical curvature
-├── 4. Filtering+Calculation/       # All-in one segmentation and calculation methods        
-└── README.md
+├── 4. Filtering+Calculation/       # All-in one segmentation and calculation methods
+├── .gitattributes                  #
+├── .mcap_to_.bin.ipynb             # .mcap to .bin format converter
+├── README.md
+├── environment.yml                 #
+└── requirements.txt                #
 ```
 
 
