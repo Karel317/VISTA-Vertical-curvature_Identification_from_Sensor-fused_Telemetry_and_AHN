@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-filename = os.path.join(script_dir, "..", "Physical_meas_data.csv")
+filename = os.path.join(script_dir, "Physical_meas_data.csv")
 
 with open(filename, 'r') as f:
     labels = [h.strip() for h in f.readline().split(",")]
@@ -17,7 +17,7 @@ for i in range(n_columns):
     columns.append(col)
 cum_heights = [np.cumsum(columns[j]) for j in range(n_columns)]
 
-fig, axes = plt.subplots(3, 1, figsize=(10, 10))
+fig, axes = plt.subplots(3, 1, figsize=(9, 9))
 for i, (cum_height, ax) in enumerate(zip(cum_heights, axes)):
     x = np.arange(len(cum_height)) * 0.222
     ax.plot(x, -cum_height)
