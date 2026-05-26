@@ -152,9 +152,9 @@ for vm, vd in results_validation.items():
         print(f"    Max diff: {max_d:.4f} m")
 
 # ── Plotting ──────────────────────────────────────────────────────────────────
-n_rows = 2 + (1 if comparisons else 0)
-fig, axes = plt.subplots(n_rows, 1, figsize=(12, 5 * n_rows))
-ax_z, ax_k = axes[0], axes[1]
+n_rows = 1 #2 + (1 if comparisons else 0)
+fig, ax_z = plt.subplots(n_rows, 1, figsize=(12, 5 * n_rows))
+#ax_z, ax_k = axes[0], axes[1]
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
 plotted = set()
@@ -170,17 +170,17 @@ for label, store, marker, ls in [
         plotted.add(tag)
         c   = colors[color_idx % len(colors)]
         dist_lin = np.linspace(d["distance"][0], d["distance"][-1], 500)
-        ax_z.scatter(d["distance"], d["z"],           s=25, color=c, marker=marker, zorder=3)
+        ax_z.scatter(d["distance"], d["z"],           s=20, color=c, marker=marker, alpha=0.7, zorder=3)
         ax_z.plot(dist_lin, d["spline_z"](dist_lin),    color=c, linestyle=ls, label=tag)
-        ax_k.scatter(d["distance"], d["kappa"],        s=25, color=c, marker=marker, zorder=3)
-        ax_k.plot(dist_lin, d["spline_kappa"](dist_lin), color=c, linestyle=ls, label=tag)
+        #ax_k.scatter(d["distance"], d["kappa"],        s=25, color=c, marker=marker, zorder=3)
+        #ax_k.plot(dist_lin, d["spline_kappa"](dist_lin), color=c, linestyle=ls, label=tag)
         color_idx += 1
 ax_z.set_xlabel("x (m)")
 ax_z.set_ylabel("z (m, relative to bike)")
 ax_z.set_title("Elevation profile")
 ax_z.legend()
 ax_z.grid(True)
-
+"""
 ax_k.set_xlabel("x (m)")
 ax_k.set_ylabel("κ (1/m)")
 ax_k.set_title("Curvature profile")
@@ -201,7 +201,7 @@ if comparisons:
     ax_d.set_title("Elevation difference (Validation − Calculation)")
     ax_d.legend()
     ax_d.grid(True)
-
+"""
 plt.tight_layout(h_pad=6)
 plt.show()
 
