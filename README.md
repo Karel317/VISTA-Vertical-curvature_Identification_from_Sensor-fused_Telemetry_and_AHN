@@ -1,4 +1,4 @@
-# LiDAR Ground Segmentation with Vertical Curvature (Nog een paar dingen toevoegen aan het eind)
+# Dutch Hills Dataset: Identifying vertical curvature using the SenseBike, a sensor equipped bicycle
 
 A LiDAR-based ground segmentation pipeline that builds a dataset with vertical curvature and accurately identifies that curvature in 3D point clouds.
 
