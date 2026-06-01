@@ -1,4 +1,4 @@
-# Main file:
+# Main file (NOG AFSCHRIJVEN LEON!):
 - validation_main.py [NOT DONE]
   Script imports results from .npz files calculates validation metrics
 
