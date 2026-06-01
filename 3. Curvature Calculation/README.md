@@ -20,7 +20,7 @@ The IRLS method works by fitting a quadratic plane iteratively to a pointcloud. 
 **Useage**
 The full pipeline is explained within the jupyter notebook.
 Outputs of the quadratic plane fitting looks something like this:
-![IRLS Quadratic Plan Fitting](Pictures/IRLS_quadratic_plane_fitting.png)
+![IRLS Quadratic Plan Fitting](Pictures/Calculation_via_IRLS.png)
 
 After the plane is fitted, further calculations are done. An example of the output:
 ![Calculation via IRLS](Pictures/Calculation_via_IRLS.png)
