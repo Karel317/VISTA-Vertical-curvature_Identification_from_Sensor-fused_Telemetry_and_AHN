@@ -58,16 +58,7 @@ pip install -r requirements.txt
 
 The dataset is **not included** in this repository due to its size. Download it separately:
 
-> _TODO: Add the dataset source — a link (Google Drive / Zenodo / institutional storage), or instructions for how to obtain it. Mention the format (.pcd, .bin, .las, .ply) and the sensor used (e.g. Velodyne VLP-16, Ouster OS1)._
-
-After downloading, place the data in the `data/` folder so the structure looks like:
-```
-data/
-├── raw/
-│   └── <pointcloud files here>
-└── labels/
-    └── <label files here>
-```
+The data is stored on a hard drive and the SenseBike, which are in the hands of the TU Delft Department of Cognitive Robotics.
 
 ---
 
