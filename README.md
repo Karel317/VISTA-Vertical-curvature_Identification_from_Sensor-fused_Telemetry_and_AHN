@@ -83,7 +83,7 @@ The Validation Methods folder involves scripts that use the AHN Height map and s
 (PICTURE OF SOME RESULTS)
 
 The Filtering Methods folder involves scripts that apply filtering methods to identify groundpoints on curved terrain accurately.
-(PICTURES OF SOME RESULTS)
+![Patchwork++ Pointcloud filter](path/to/image.png)
 
 The Curvature Calculation folder involves scripts that apply methods to calculate curvature on from 3D pointclouds
 (PICTURES OF SOME RESULTS)
