@@ -91,7 +91,7 @@ The Curvature Calculation folder involves scripts that apply methods to calculat
 ---
 
 ## 🔬 Method
-For the full methodology, see the thesis report: `[https://www.overleaf.com/project/69b282b375350f2533f82419]`.
+For the full methodology, see the thesis report: `https://www.overleaf.com/project/69b282b375350f2533f82419`.
 
 ---
 
