@@ -12,7 +12,7 @@ Traditional ground segmentation methods often assume a flat or near-flat ground 
 
 - Building a LiDAR dataset that explicitly includes vertical curvature
 - Applying filtering methods that identify curved ground accurately
-- Providing reproducible scripts and notebooks for analysis and visualization
+- Providing reproducible scripts and notebooks for analysis and visualization of vertical curvature in 3D point clouds
 
 ## 📁 Repository Structure
 
