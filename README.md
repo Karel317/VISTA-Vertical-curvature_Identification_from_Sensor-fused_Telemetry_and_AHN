@@ -1,6 +1,6 @@
-# LiDAR Ground Segmentation with Vertical Curvature (Nog een paar dingen toevoegen aan het eind)
+# Dutch Hills Dataset: Identifying vertical curvature using the SenseBike, a sensor equipped bicycle
 
-A LiDAR-based ground segmentation pipeline that builds a dataset with vertical curvature and accurately identifies that curvature in 3D point clouds.
+A LiDAR-based curvature detection/calculation pipeline that builds a dataset with vertical curvature and identifies that curvature in 3D point clouds.
 
 This repository accompanies a Bachelor's End Thesis conducted at **Delft University of Technology**, Department of **Cognitive Robotics**.
 
@@ -12,7 +12,7 @@ Traditional ground segmentation methods often assume a flat or near-flat ground 
 
 - Building a LiDAR dataset that explicitly includes vertical curvature
 - Applying filtering methods that identify curved ground accurately
-- Providing reproducible scripts and notebooks for analysis and visualization
+- Providing reproducible scripts and notebooks for analysis and visualization of vertical curvature in 3D point clouds
 
 ## 📁 Repository Structure
 
@@ -79,13 +79,19 @@ Now run the desired files via VSCode.
 
 
 ## 📊 Results
+The Validation Methods folder involves scripts that use the AHN Height map and several sensors in order to provide a method to validate the vertical curvature calculation on the 3D pointclouds.
+(PICTURE OF SOME RESULTS)
 
-> _TODO: Briefly describe what the pipeline outputs — segmented point clouds, accuracy/IoU metrics, visualizations. Optionally include a sample figure: `![Example](results/example.png)`._
+The Filtering Methods folder involves scripts that apply filtering methods to identify groundpoints on curved terrain accurately.
+![Patchwork++ Pointcloud filter](Pictures/Filtering_readme.png)
+
+The Curvature Calculation folder involves scripts that apply methods to calculate curvature on from 3D pointclouds
+(PICTURES OF SOME RESULTS)
 
 ---
 
 ## 🔬 Method
-For the full methodology, see the thesis report: `[link or filename of thesis PDF]`.
+For the full methodology, see the thesis report: `https://www.overleaf.com/project/69b282b375350f2533f82419`.
 
 ---
 
