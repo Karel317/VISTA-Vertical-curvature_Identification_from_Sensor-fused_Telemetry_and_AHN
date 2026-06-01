@@ -11,7 +11,7 @@ from kiss_icp.datasets import dataset_factory
 # SETTINGS
 # =============================================================================
 
-DATASET_PATH = Path(r"D:\Rosbags\29 april\2026_04_29\15_20_00\rosbag\rosbag_0.mcap")   # path to mcap file
+DATASET_PATH = Path(r"D:\Data_gathered\2026_05_01\Rosbag\14_30_00\rosbag\rosbag_0.mcap")   # path to mcap file
 TOPIC        = "/rslidar/M1P_deskewed"   # Lidar topic
 
 CUSTOM_PARAMETERS = False # Set to True to override individual parameters below instead of using kiss_icp.yaml
@@ -48,7 +48,7 @@ if CUSTOM_PARAMETERS:
 # =============================================================================
 
 # Derive folder name from path:
-_date = DATASET_PATH.parts[-4] 
+_date = DATASET_PATH.parts[-5] 
 _time = DATASET_PATH.parts[-3]
 RESULTS_DIR = SCRIPT_DIR / "KISS ICP results" / f"{_date} {_time}"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)

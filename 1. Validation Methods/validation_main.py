@@ -4,14 +4,21 @@ import numpy as np
 import scipy.interpolate as sc
 import matplotlib.pyplot as plt
 
-RESULTS_DIR = r"D:\Validation_results"
+date_folder = "2026_05_01"
+time_folder = "14_30_00"
+RESULTS_DIR = os.path.join(r"D:\Validation_results", date_folder, time_folder)
 
 # ── List the result files to load (filenames without .npz extension) ──────────
 VALIDATION_FILES = [
-    "ahn4_1777638090",
+    "AHN4_strip_1777638690",
+    "GPS_AHN4_validation_1777638690.2496657",
+    "IMU_validation_1777638690.2496657",
+    "KISS_ICP_1777638690.2496657"
 ]
 CALCULATION_FILES = [
-    "ahn4_1777638090",
+    #"height-deriv_1777639270",
+    "PCA_1777638690",
+    "RANSAC_1777638690",
 ]
 
 SMOOTHENING_FACTOR = 0  # Adjust as needed (0 = no smoothing, higher = more smoothing)
@@ -21,6 +28,7 @@ results_validation = {} # Access variables by method name example: results["AHN4
 try:
     for fname in VALIDATION_FILES:
         fpath = os.path.join(RESULTS_DIR, fname + ".npz")
+        print(fpath)
         data = np.load(fpath, allow_pickle=True)
 
         method = str(data["method"].flat[0])
@@ -28,16 +36,16 @@ try:
             "x":     data["x"],
             "y":     data["y"],
             "z":     data["z"],
-            "kappa": data["kappa"],
+            "s":     data["s"],
             "t":     data["t"],
         }
-        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "kappa", "t", "method")]
+        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "method")]
         extras = {k: data[k] for k in extra_keys}
 
         results_validation[method] = {**core, **extras}
         print(f"Loaded: {method}")
         print(f"  Core   : x{data['x'].shape}, y{data['y'].shape}, z{data['z'].shape}, "
-            f"kappa{data['kappa'].shape}, t={float(data['t'][0]):.2f}")
+            f"s{data['s'].shape}, t={float(data['t'][0]):.2f}")
         if extras:
             print(f"  Extras : {list(extras.keys())}")
 except FileNotFoundError:
@@ -69,12 +77,6 @@ try:
 except FileNotFoundError:
     sys.exit("Error: No files found for CALCULATION. Check filename and if does not have .npz")
 
-
-# ── Spline fitting ────────────────────────────────────────────────────────────
-for d in list(results_validation.values()) + list(results_calculation.values()):
-    d["spline_z"]     = sc.make_splrep(d["s"], d["z"],     s=SMOOTHENING_FACTOR)
-    #d["spline_s"]     = sc.make_splrep(d["x"], d["s"],     s=SMOOTHENING_FACTOR)
-
 # ── Per-method statistics ─────────────────────────────────────────────────────
 print("\n── Per-method spline statistics ──────────────────────────────────────")
 seen = set()
@@ -84,21 +86,47 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
         if key in seen:
             continue
         seen.add(key)
-        x, y, z, s = d["x"],d["y"] d["z"], d["s"]
+        x, y, z, s = d["x"],d["y"], d["z"], d["s"]
+
         if s is not None:
             distance = s
         else:
             distance = np.hypot(np.diff(x)**2, np.diff(y)**2)
 
-        sp = sc.make_splrep(distance, z, s=SMOOTHENING_FACTOR)
-        sp_z = d["spline_z"]
-        sp_k = d["spline_kappa"]
-        x_lin = np.linspace(x[0], x[-1], 1000)
-        area_z     = np.trapezoid(sp_z(x_lin), x_lin)
-        area_kappa = np.trapezoid(sp_k(x_lin), x_lin)
-        z_fit      = sp_z(x)
-        rmse       = np.sqrt(np.mean((z_fit - z) ** 2))
-        max_diff   = np.max(np.abs(z_fit - z))
+        if z is None or np.ndim(z) == 0 or np.size(z) == 0:
+            print(f"Warning: No z data for {label} - {method}, Calculating with slope")
+            slope_deg = d["slope_deg"]
+            delta_distance = np.concatenate([[0], np.cumsum(distance)])
+            z = np.tan(np.radians(slope_deg)) * np.diff(delta_distance)
+            store[method]["z"] = z
+
+            #z = np.concatenate([[0], np.cumsum(z)])
+        
+        valid = np.isfinite(z)
+        z, distance = z[valid], distance[valid]
+        sp_z = sc.make_splrep(distance, z, s=SMOOTHENING_FACTOR)
+        if d.get("kappa") is not None:
+            kappa = d["kappa"]
+        else:
+            # Get the derivatives analytically
+            dzds = sp_z.derivative(nu=1)(distance)
+            slope_deg = np.degrees(np.arctan(dzds))
+            d2zds2 = sp_z.derivative(nu=2)(distance)
+            kappa = abs(d2zds2) / (1.0 + dzds ** 2) ** 1.5
+            
+        sp_k = sc.make_splrep(distance, kappa, s=SMOOTHENING_FACTOR)
+        store[method]["spline_z"] = sp_z
+        store[method]["spline_kappa"] = sp_k
+        store[method]["kappa"] = kappa
+        store[method]["distance"] = distance
+        store[method]["z"] = z
+        dist_lin = np.linspace(distance[0], distance[-1], 1000)
+        area_z     = np.trapezoid(np.abs(sp_z(dist_lin)), dist_lin) #TODO I NEED THIS AB
+        area_kappa = np.trapezoid(np.abs(sp_k(dist_lin)), dist_lin)
+
+        z_spline      = sp_z(distance) # The spline evaluated at the original positions
+        rmse       = np.sqrt(np.mean((z_spline - z) ** 2))
+        max_diff   = np.max(np.abs(z_spline - z))
 
         print(f"\n  [{label} – {method}]")
         print(f"    Area under z spline:     {area_z:.4f} m²")
@@ -110,16 +138,15 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
 comparisons = []
 for vm, vd in results_validation.items():
     for cm, cd in results_calculation.items():
-
-        x_min  = max(vd["x"].min(), cd["x"].min())
-        x_max  = min(vd["x"].max(), cd["x"].max())
-        x_cmp  = np.linspace(x_min, x_max, 500)
-        z_v    = vd["spline_z"](x_cmp)
-        z_c    = cd["spline_z"](x_cmp)
+        dist_min  = max(vd["distance"].min(), cd["distance"].min())
+        dist_max  = min(vd["distance"].max(), cd["distance"].max())
+        dist_row  = np.linspace(dist_min, dist_max, 500)
+        z_v    = vd["spline_z"](dist_row)
+        z_c    = cd["spline_z"](dist_row)
         diff   = z_v - z_c
         rmse   = np.sqrt(np.mean(diff ** 2))
         max_d  = np.max(np.abs(diff))
-        comparisons.append((vm, cm, x_cmp, diff, rmse, max_d))
+        comparisons.append((vm, cm, dist_row, diff, rmse, max_d))
         print(f"\n  [{vm}  vs  {cm}]")
         print(f"    RMSE:     {rmse:.4f} m")
         print(f"    Max diff: {max_d:.4f} m")
@@ -142,14 +169,12 @@ for label, store, marker, ls in [
             continue
         plotted.add(tag)
         c   = colors[color_idx % len(colors)]
-        x_s = np.linspace(d["x"][0], d["x"][-1], 500)
-
-        ax_z.scatter(d["x"], d["z"],           s=25, color=c, marker=marker, zorder=3)
-        ax_z.plot(x_s, d["spline_z"](x_s),    color=c, linestyle=ls, label=tag)
-        ax_k.scatter(d["x"], d["kappa"],        s=25, color=c, marker=marker, zorder=3)
-        ax_k.plot(x_s, d["spline_kappa"](x_s), color=c, linestyle=ls, label=tag)
+        dist_lin = np.linspace(d["distance"][0], d["distance"][-1], 500)
+        ax_z.scatter(d["distance"], d["z"],           s=25, color=c, marker=marker, zorder=3)
+        ax_z.plot(dist_lin, d["spline_z"](dist_lin),    color=c, linestyle=ls, label=tag)
+        ax_k.scatter(d["distance"], d["kappa"],        s=25, color=c, marker=marker, zorder=3)
+        ax_k.plot(dist_lin, d["spline_kappa"](dist_lin), color=c, linestyle=ls, label=tag)
         color_idx += 1
-
 ax_z.set_xlabel("x (m)")
 ax_z.set_ylabel("z (m, relative to bike)")
 ax_z.set_title("Elevation profile")
@@ -169,7 +194,7 @@ if comparisons:
     ax_d = axes[2]
     for vm, cm, x_cmp, diff, rmse, max_d in comparisons:
         ax_d.plot(x_cmp, diff,
-                  label=f"{vm} − {cm}  (RMSE={rmse:.4f} m, max={max_d:.4f} m)")
+                  label=f"{vm} − {cm}")
     ax_d.axhline(0, color="k", linewidth=0.8, linestyle="--")
     ax_d.set_xlabel("x (m)")
     ax_d.set_ylabel("Δz (m)")
@@ -177,6 +202,6 @@ if comparisons:
     ax_d.legend()
     ax_d.grid(True)
 
-plt.tight_layout()
+plt.tight_layout(h_pad=6)
 plt.show()
 
