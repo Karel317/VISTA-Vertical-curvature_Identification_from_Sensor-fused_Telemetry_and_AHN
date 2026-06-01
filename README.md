@@ -79,14 +79,16 @@ Now run the desired files via VSCode.
 
 
 ## 📊 Results
-The Validation Methods folder involves scripts that use the AHN Height map and several sensors in order to provide a method to validate the vertical curvature calculation on the 3D pointclouds.
-![Validation]()
+The Validation Methods folder involves scripts that use the AHN Height map and several sensors in order to provide a method to validate the vertical curvature calculation on the 3D pointclouds. Example output:
+![Validation](Pictures/IMU data.jpeg)
 
-The Filtering Methods folder involves scripts that apply filtering methods to identify groundpoints on curved terrain accurately. For example:
+The Filtering Methods folder involves scripts that apply filtering methods to identify groundpoints on curved terrain accurately. Example output:
 ![Patchwork++ Pointcloud filter](Pictures/Filtering_readme.png)
 
-The Curvature Calculation folder involves scripts that apply methods to calculate curvature on from 3D pointclouds
-(PICTURES OF SOME RESULTS)
+The Curvature Calculation folder involves scripts that apply methods to calculate curvature on from 3D pointclouds. Example output:
+![IRLS quadratic plane fitting](Pictures/IRLS_quadratic_plane_fitting.png)
+![RANSAC Pointcloud Calculation](Pictures/Patchwork_RANSAC_calculation.png)
+
 
 ---
 
