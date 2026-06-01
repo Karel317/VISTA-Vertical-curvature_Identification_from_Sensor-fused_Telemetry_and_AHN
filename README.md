@@ -79,13 +79,19 @@ Now run the desired files via VSCode.
 
 
 ## 📊 Results
+The Validation Methods folder involves scripts that use the AHN Height map and several sensors in order to provide a method to validate the vertical curvature calculation on the 3D pointclouds.
+(PICTURE OF SOME RESULTS)
 
-> _TODO: Briefly describe what the pipeline outputs — segmented point clouds, accuracy/IoU metrics, visualizations. Optionally include a sample figure: `![Example](results/example.png)`._
+The Filtering Methods folder involves scripts that apply filtering methods to identify groundpoints on curved terrain accurately.
+(PICTURES OF SOME RESULTS)
+
+The Curvature Calculation folder involves scripts that apply methods to calculate curvature on from 3D pointclouds
+(PICTURES OF SOME RESULTS)
 
 ---
 
 ## 🔬 Method
-For the full methodology, see the thesis report: `[link or filename of thesis PDF]`.
+For the full methodology, see the thesis report: `[(https://www.overleaf.com/project/69b282b375350f2533f82419)]`.
 
 ---
 
