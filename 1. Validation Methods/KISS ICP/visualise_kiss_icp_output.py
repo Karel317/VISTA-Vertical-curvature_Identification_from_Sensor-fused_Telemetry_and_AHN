@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 MODE = "npy"
 
 SCRIPT_DIR = Path(__file__).parent
-RUN_NAME   = "28 april 17_30_00"   # subfolder inside "KISS ICP results" (npy mode)
+RUN_NAME   = "2026_05_22 10_35_00"   # subfolder inside "KISS ICP results" (npy mode)
 KITTI_FILE = r"C:\Users\Leons\Downloads\data_odometry_poses\dataset\poses\00.txt"  # kitti mode
 
 # =============================================================================
