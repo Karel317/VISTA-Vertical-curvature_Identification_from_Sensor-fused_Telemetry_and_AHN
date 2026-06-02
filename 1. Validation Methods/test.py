@@ -4,24 +4,31 @@ import numpy as np
 import scipy.interpolate as sc
 import matplotlib.pyplot as plt
 # check why is ahn more precise then 5cm? 
-RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_50_00"
+
+RESULTS_DIR = r"D:\NPZ"
 
 # ── List the result files to load (filenames without .npz extension) ──────────
 VALIDATION_FILES = [
-    "AHN5_DSM_1779439918",
-    "AHN5_DTM_1779439918",
-    "Physical_meas_stationsbrug_1779439914.817101"
+    #"AHN5_DSM_1779439918",
+    #"AHN5_DTM_1779439918",
+    #"Physical_meas_stationsbrug_1779439914.817101"
+    "height-deriv_csf_1779439916108",
+    "height-deriv_patchwork_1779439916108",
+    "PCA_csf_1779439916108",
+    "PCA_patchwork_1779439916108",
+    "RANSAC_csf_1779439916108",
+    "RANSAC_patchwork_1779439916108",
 ]
 
 CALCULATION_FILES = [
-    "CSF_height-deriv_1779439917",
-    "CSF_PCA_1779439917",
-    "CSF_RANSAC_1779439917",
-    "EKF_curvature_validation_1779439917.9729304",
-    "PW_height-deriv_1779439917",
-    "PW_PCA_1779439917",
-    "PW_RANSAC_1779439917",
-    "Z_positional_tracking_1779439917.9729304",
+    #"CSF_height-deriv_1779439917",
+    #"CSF_PCA_1779439917",
+    #"CSF_RANSAC_1779439917",
+    #"EKF_curvature_validation_1779439917.9729304",
+    #"PW_height-deriv_1779439917",
+    #"PW_PCA_1779439917",
+    #"PW_RANSAC_1779439917",
+    #"Z_positional_tracking_1779439917.9729304",
 ]
 
 
@@ -37,11 +44,11 @@ try:
 
         method = str(data["method"].flat[0])
         core = {
-            "x":     data["x"],
-            "y":     data["y"],
-            "z":     data["z"],
-            "s":     data["s"],
-            "t":     data["t"],
+            "x":     data["x"]  if "kappa" in data.files else None,
+            #"y":     data["y"]  if "kappa" in data.files else None,
+            "z":     data["z"]  if "kappa" in data.files else None,
+            "s":     data["s"]  if "kappa" in data.files else None,
+            "t":     data["t"]  if "kappa" in data.files else None,
             "kappa": data["kappa"] if "kappa" in data.files else None,
         }
         extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "kappa", "method")]
@@ -65,11 +72,11 @@ try:
 
         method = str(data["method"].flat[0])
         core = {
-            "x":     data["x"],
-            "y":     data["y"],
-            "z":     data["z"],
-            "s":     data["s"],
-            "t":     data["t"],
+            "x":     data["x"]  if "kappa" in data.files else None,
+            #"y":     data["y"]  if "kappa" in data.files else None,
+            "z":     data["z"]  if "kappa" in data.files else None,
+            "s":     data["s"]  if "kappa" in data.files else None,
+            "t":     data["t"]  if "kappa" in data.files else None,
             "kappa": data["kappa"] if "kappa" in data.files else None,
         }
         extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "kappa", "method")]
@@ -92,9 +99,14 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
         x, y, z, s = d["x"],d["y"], d["z"], d["s"]
 
         if s is not None:
+            # s is already a cumulative distance / arc-length coordinate
             distance = s
+            is_cumulative = True
+            print("A")
         else:
+            # segment lengths between consecutive points; needs cumsum below
             distance = np.hypot(np.diff(x)**2, np.diff(y)**2)
+            is_cumulative = False
 
         if z is None or np.ndim(z) == 0 or np.size(z) == 0:
             print(f"Warning: No z data for {label} - {method}, Calculating with slope")
@@ -108,7 +120,12 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
         if len(distance) != len(z) and len(distance) == len(z) + 1:
             print(f"Warning: distance and z length mismatch for {label} - {method}, i did distance -1")
             distance = np.diff(distance)
+            is_cumulative = True
+            distance = np.cumsum(distance)
 
+        print(distance)
+        if not is_cumulative:
+            distance = np.cumsum(distance)
         valid = np.isfinite(z)
         z, distance = z[valid], distance[valid]
         sp_z = sc.make_splrep(distance, z, s=SMOOTHENING_FACTOR)
@@ -154,7 +171,7 @@ phys["distance"] = dist_grid
 z = np.zeros(len(dist_grid))
 phys_idx = 0
 for i, d in enumerate(dist_grid):
-    if d >= 3.1711242130880257:
+    if d >= 3.1711242130880257 and phys_idx < len(phys["z"]):
         z[i] = phys["z"][phys_idx] / 100
         phys_idx += 1
 phys["z"] = z
