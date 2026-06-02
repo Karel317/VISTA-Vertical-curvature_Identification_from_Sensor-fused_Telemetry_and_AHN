@@ -46,7 +46,7 @@ try:
             "t":     data["t"],
             "kappa": data["kappa"],
         }
-        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t","kappa" "method")]
+        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t","kappa", "method")]
         extras = {k: data[k] for k in extra_keys}
 
         results_validation[method] = {**core, **extras}
@@ -99,16 +99,16 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
         if s is not None:
             distance = s
         else:
-            distance = np.hypot(np.diff(x)**2, np.diff(y)**2)
+            distance = np.concatenate([[0], np.cumsum(np.hypot(np.diff(x), np.diff(y)))])
 
         if z is None or np.ndim(z) == 0 or np.size(z) == 0:
             print(f"Warning: No z data for {label} - {method}, Calculating with slope")
             slope_deg = d["slope_deg"]
-            delta_distance = np.concatenate([[0], np.cumsum(distance)])
-            z = np.tan(np.radians(slope_deg)) * np.diff(delta_distance)
+            dz_seg = np.tan(np.radians(slope_deg)) * np.diff(distance)
+            z = np.concatenate([[0], np.cumsum(dz_seg)])
             store[method]["z"] = z
 
-            #z = np.concatenate([[0], np.cumsum(z)])
+            
         
         valid = np.isfinite(z)
         z, distance = z[valid], distance[valid]
@@ -163,9 +163,18 @@ for vm, vd in results_validation.items():
         print(f"    Max diff: {max_d:.4f} m")
 
 # ── Plotting ──────────────────────────────────────────────────────────────────
-n_rows = 1 #2 + (1 if comparisons else 0)
+# ── Plotting ──────────────────────────────────────────────────────────────────
+n_rows = 2 + (1 if comparisons else 0)
 fig, axes = plt.subplots(n_rows, 1, figsize=(12, 5 * n_rows))
-ax_z, ax_k = axes[0], axes[1]
+
+# When n_rows == 1, plt.subplots returns a single Axes, not an array.
+# Wrapping with np.atleast_1d makes indexing safe in every case.
+axes = np.atleast_1d(axes)
+
+ax_z = axes[0]
+ax_k = axes[1]
+ax_d = axes[2] if comparisons else None
+
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
 plotted = set()
@@ -179,42 +188,44 @@ for label, store, marker, ls in [
         if tag in plotted:
             continue
         plotted.add(tag)
-        c   = colors[color_idx % len(colors)]
+        c = colors[color_idx % len(colors)]
         dist_lin = np.linspace(d["distance"][0], d["distance"][-1], 500)
-        ax_z.scatter(d["distance"], d["z"],           s=20, color=c, marker=marker, alpha=0.7, zorder=3)
-        ax_z.plot(dist_lin, d["spline_z"](dist_lin),    color=c, linestyle=ls, label=tag)
-        #ax_k.scatter(d["distance"], d["kappa"],        s=25, color=c, marker=marker, zorder=3)
-        #ax_k.plot(dist_lin, d["spline_kappa"](dist_lin), color=c, linestyle=ls, label=tag)
+
+        # Elevation
+        ax_z.scatter(d["distance"], d["z"], s=20, color=c, marker=marker, alpha=0.7, zorder=3)
+        ax_z.plot(dist_lin, d["spline_z"](dist_lin), color=c, linestyle=ls, label=tag)
+
+        # Curvature (uncommented so ax_k actually gets data)
+        ax_k.scatter(d["distance"], d["kappa"], s=25, color=c, marker=marker, zorder=3)
+        ax_k.plot(dist_lin, d["spline_kappa"](dist_lin), color=c, linestyle=ls, label=tag)
+
         color_idx += 1
-ax_z.set_xlabel("x (m)")
+
+ax_z.set_xlabel("s (m)")
 ax_z.set_ylabel("z (m, relative to bike)")
 ax_z.set_title("Elevation profile")
 ax_z.legend()
 ax_z.grid(True)
 
-ax_k.set_xlabel("x (m)")
+ax_k.set_xlabel("s (m)")
 ax_k.set_ylabel("κ (1/m)")
 ax_k.set_title("Curvature profile")
-ax_k.legend(
-ax_k.set_yscale('log')
-
-
-)
+ax_k.legend()
+ax_k.set_yscale("log")   # separate statement, not inside legend()
 ax_k.grid(True)
 
-if comparisons:
-    ax_d = axes[2]
+if ax_d is not None:
     for vm, cm, x_cmp, diff, rmse, max_d in comparisons:
-        ax_d.plot(x_cmp, diff,
-                  label=f"{vm} − {cm}")
+        ax_d.plot(x_cmp, diff, label=f"{vm} − {cm}")
     ax_d.axhline(0, color="k", linewidth=0.8, linestyle="--")
-    ax_d.set_xlabel("x (m)")
+    ax_d.set_xlabel("s (m)")
     ax_d.set_ylabel("Δz (m)")
     ax_d.set_title("Elevation difference (Validation − Calculation)")
     ax_d.legend()
     ax_d.grid(True)
-ax_d.set_yscale('log')
+    # Note: do NOT use log scale here — Δz is signed and will go negative.
+    # If you really want log-like behavior, use symlog:
+    # ax_d.set_yscale("symlog", linthresh=1e-3)
 
 plt.tight_layout(h_pad=6)
 plt.show()
-
