@@ -17,19 +17,16 @@ Hier komt de uitleg over hoe de code werkt. Denk aan: welk file format gaat hier
 ## csf_ground_segmentation.ipynb (+cloth_nodes)
 This file uses a cloth simulation filter, CSF in short. The pointcloud is inverted and a simulated cloth is layed op top of the surface. All points within a certain threshold of that cloth will be taken as ground.
 
-**Usage (Rayan)** 
-Hier komt de uitleg over hoe de code werkt. Denk aan: welk file format gaat hierin, zijn er parameters die je zelf kan instellen?, wat gebeurt er doorheen de code, etc.
-
-usage \
+**usage** \
 This file uses ground segmentation on a single from from a ROS2.mcap recording, using the cloth simulation filter (CSF) algorithm. CSF works by inverting the point cloud upside down and draping a simulated cloth over the surface. All points withn a set distance threshold are classified as ground points.
 
-input\
+**input** \
 The notebook needs a .mcap file with the following topics: \
 /rslidar/M1P_deskewed \
 /rslidar/helios_R \
 /rslidar/helios_L 
 
-adjustable parameters \
+**adjustable parameters** \
 Input file - path to the .mcap file \
 Frame_index - the frame you want to process from the .mcap file \
 If you want to process a specific moment in time rather than a frame number, set USE_TIMESTAMP = True in Cell 1b and fill in TARGET_TIMESTAMP with a timestamp copied from Foxglove. The corresponding frame number will be determined automatically.
@@ -40,7 +37,7 @@ CSF_SLOPE_SMOOTH — smooth slopes (True) or steep terrain (False) \
 CSF_THRESHOLD — maximum distance from the cloth to count as ground (default: 0.1 m) \
 The width of the strip on which CSF is applied is adjustable in Cell 6 via X_RANGE and Y_RANGE. 
 
-Output \
+**Output** \
 Results are saved to the folder set via OUTPUT_DIR in Cell 1: \
 frameXXX_ground.ply — ground points \
 frameXXX_merged.ply — full fused point cloud \
