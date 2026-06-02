@@ -1,6 +1,6 @@
-# LiDAR Ground Segmentation with Vertical Curvature (Nog een paar dingen toevoegen aan het eind)
+# Dutch Hills Dataset: Identifying vertical curvature using the SenseBike, a sensor equipped bicycle
 
-A LiDAR-based ground segmentation pipeline that builds a dataset with vertical curvature and accurately identifies that curvature in 3D point clouds.
+A LiDAR-based curvature detection/calculation pipeline that builds a dataset with vertical curvature and identifies that curvature in 3D point clouds.
 
 This repository accompanies a Bachelor's End Thesis conducted at **Delft University of Technology**, Department of **Cognitive Robotics**.
 
@@ -12,7 +12,7 @@ Traditional ground segmentation methods often assume a flat or near-flat ground 
 
 - Building a LiDAR dataset that explicitly includes vertical curvature
 - Applying filtering methods that identify curved ground accurately
-- Providing reproducible scripts and notebooks for analysis and visualization
+- Providing reproducible scripts and notebooks for analysis and visualization of vertical curvature in 3D point clouds
 
 ## 📁 Repository Structure
 
@@ -21,6 +21,8 @@ lidar-ground-segmentation/
 ├── 1. Validation/                  # Scripts that validate the curvature calculation from "3. Curvature Calculation"
 ├── 2. Filtering Methods/           # Ground segmentation methods
 ├── 3. Curvature Calculation/       # Calculation methods that identify and quantify vertical curvature
+├── Pictures                        # Pictures used in the READMEs
+├── Results                         # WHAT THE HELLY IS THIS
 ├── .gitattributes
 ├── .mcap_to_.bin.ipynb             # .mcap to .bin format converter
 ├── IMU SVO to MCAP.py              # .svo to .mcap format converter
@@ -56,16 +58,7 @@ pip install -r requirements.txt
 
 The dataset is **not included** in this repository due to its size. Download it separately:
 
-> _TODO: Add the dataset source — a link (Google Drive / Zenodo / institutional storage), or instructions for how to obtain it. Mention the format (.pcd, .bin, .las, .ply) and the sensor used (e.g. Velodyne VLP-16, Ouster OS1)._
-
-After downloading, place the data in the `data/` folder so the structure looks like:
-```
-data/
-├── raw/
-│   └── <pointcloud files here>
-└── labels/
-    └── <label files here>
-```
+The data is stored on a hard drive and the SenseBike, which are in the hands of the TU Delft Department of Cognitive Robotics.
 
 ---
 
@@ -79,13 +72,21 @@ Now run the desired files via VSCode.
 
 
 ## 📊 Results
+The Validation Methods folder involves scripts that use the AHN Height map and several sensors in order to provide a method to validate the vertical curvature calculation on the 3D pointclouds. Example output:
+![Validation](Pictures/IMU data.jpeg)
 
-> _TODO: Briefly describe what the pipeline outputs — segmented point clouds, accuracy/IoU metrics, visualizations. Optionally include a sample figure: `![Example](results/example.png)`._
+The Filtering Methods folder involves scripts that apply filtering methods to identify groundpoints on curved terrain accurately. Example output:
+![Patchwork++ Pointcloud filter](Pictures/Filtering_readme.png)
+
+The Curvature Calculation folder involves scripts that apply methods to calculate curvature on from 3D pointclouds. Example output:
+![IRLS quadratic plane fitting](Pictures/IRLS_quadratic_plane_fitting.png)
+![RANSAC Pointcloud Calculation](Pictures/Patchwork_RANSAC_calculation.png)
+
 
 ---
 
 ## 🔬 Method
-For the full methodology, see the thesis report: `[link or filename of thesis PDF]`.
+For the full methodology, see the thesis report: `https://www.overleaf.com/project/69b282b375350f2533f82419`.
 
 ---
 
