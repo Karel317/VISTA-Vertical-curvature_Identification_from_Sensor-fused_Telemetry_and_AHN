@@ -11,8 +11,8 @@ from kiss_icp.datasets import dataset_factory
 # SETTINGS
 # =============================================================================
 
-DATASET_PATH = Path(r"D:\Data_gathered\2026_05_01\Rosbag\14_30_00\rosbag\rosbag_0.mcap")   # path to mcap file
-TOPIC        = "/rslidar/M1P_deskewed"   # Lidar topic
+DATASET_PATH = Path(r"D:\Data_gathered\2026_05_22\Rosbag\10_40_00\rosbag\rosbag_0.mcap")   # path to mcap file
+TOPIC        = "/rslidar/helios_L"   # Lidar topic
 
 CUSTOM_PARAMETERS = False # Set to True to override individual parameters below instead of using kiss_icp.yaml
 LIVE_VISUALIZE = False   # set to True to see a live visualization of the odometry results as they are computed (can slow down processing)

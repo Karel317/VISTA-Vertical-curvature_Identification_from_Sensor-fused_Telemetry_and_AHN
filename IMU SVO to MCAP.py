@@ -19,7 +19,7 @@ from mcap.writer import Writer as McapWriter
 # ── Hardcoded paths (set these to run directly from IDE) ─────────────────────
 # Leave SVO_PATH as an empty string to use command-line arguments instead.
 
-SVO_PATH = r"D:\Data_gathered\2026_05_01\Camera\14_30_00\back_01_05_2026-14_30_00.svo2"     # e.g. r"C:\recordings\my_recording.svo"
+SVO_PATH = r"D:\Data_gathered\2026_05_22\Camera\10_40_00\back_22_05_2026-10_40_00.svo2"     # e.g. r"C:\recordings\my_recording.svo"
 OUTPUT_PATH = r""    # leave empty to auto-generate alongside the SVO file
 
 
