@@ -2,7 +2,7 @@ import glob
 import os
 import pandas as pd
 
-folder = os.path.dirname(os.path.abspath(__file__))
+folder = r"D:\Validation_results\Statistics"
 output_file = os.path.join(folder, "merged_output.csv")
 
 csv_files = [
