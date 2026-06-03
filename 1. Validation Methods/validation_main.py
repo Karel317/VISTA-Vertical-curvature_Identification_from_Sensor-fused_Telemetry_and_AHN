@@ -15,25 +15,24 @@ import matplotlib.pyplot as plt
 # Implement a moving thing so no issues with the gps being inacurate and so methods are a meter off.
     # This can be done in 2 ways, fully letting it change a lot or implementing a max moveable distance based on gps resolution.
 
-RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_50_00"
+PHYSICAL_MEASUREMENT = False
+
+RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_42_18\1779439338"
 DISTANCE_FROM_PHYS_MEAS_POINT = 3.1711242130880257 #Measured in foxglove or inbetween 2 gps points,
 BOTTOM_LIMIT_KAPPA = 1e-6 # Minimum curvature to show on the plot (to have a better visualisation)
 # ── List the result files to load (filenames without .npz extension) ──────────
 VALIDATION_FILES = [
-    "AHN5_DSM_1779439918",
-    "AHN5_DTM_1779439918",
-    "Physical_meas_stationsbrug_1779439914.817101"
+    "height-deriv_csf_1779439338626",
+
 ]
 
 CALCULATION_FILES = [
-   #"CSF_height-deriv_1779439917",
-   # "CSF_PCA_1779439917",
-   # "CSF_RANSAC_1779439917",
-    "EKF_curvature_validation_1779439917.9729304",
-   # "PW_height-deriv_1779439917",
-   # "PW_PCA_1779439917",
-   # "PW_RANSAC_1779439917",
-    "Z_positional_tracking_1779439917.9729304",
+   "height-deriv_patchwork_1779439338626",
+   "height-deriv_csf_1779439338626",
+   "PCA_csf_1779439338626",
+   "PCA_patchwork_1779439338626",
+   "RANSAC_csf_1779439338626",
+   "RANSAC_patchwork_1779439338626"
 
 ]
 
@@ -151,30 +150,30 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
             print(f"    MAE   (spline vs raw z): {mae:.6f} m")
             print(f"    Max Δ (spline vs raw z): {max_diff:.6f} m")
 print("No issues")
+if PHYSICAL_MEASUREMENT:
+    phys_key = next(k for k in results_validation if "Physical_meas" in k)
+    dist_grid = np.arange(-5.0, 20.0, 0.222) # 0.222m is the distance between physical measurement points
+    results_validation[phys_key]["s"] = dist_grid
+    z = np.zeros(len(dist_grid))
 
-phys_key = next(k for k in results_validation if "Physical_meas" in k)
-dist_grid = np.arange(-5.0, 20.0, 0.222) # 0.222m is the distance between physical measurement points
-results_validation[phys_key]["s"] = dist_grid
-z = np.zeros(len(dist_grid))
+    phys_idx = 0
+    for i, d in enumerate(dist_grid): 
+        # Logic here is we are DISTANCE_FROM_PHYS_MEAS_POINT away from the first physical measurement point so we assign z as 0
+        # Untill this distance is reached, then we take the points of the physical measurement up until 20m.
+        if d >= DISTANCE_FROM_PHYS_MEAS_POINT and phys_idx < len(results_validation[phys_key]["z"]):
+            z[i] = results_validation[phys_key]["z"][phys_idx] / 100 # cm to m
+            phys_idx += 1
 
-phys_idx = 0
-for i, d in enumerate(dist_grid): 
-    # Logic here is we are DISTANCE_FROM_PHYS_MEAS_POINT away from the first physical measurement point so we assign z as 0
-    # Untill this distance is reached, then we take the points of the physical measurement up until 20m.
-    if d >= DISTANCE_FROM_PHYS_MEAS_POINT and phys_idx < len(results_validation[phys_key]["z"]):
-        z[i] = results_validation[phys_key]["z"][phys_idx] / 100 # cm to m
-        phys_idx += 1
+    sp_z = sc.make_splrep(dist_grid, z, s=SMOOTHENING_FACTOR)
+    dzds   = sp_z.derivative(nu=1)(dist_grid)
+    d2zds2 = sp_z.derivative(nu=2)(dist_grid)
+    kappa  = abs(d2zds2) / (1.0 + dzds ** 2) ** 1.5
+    sp_k   = sc.make_splrep(dist_grid, kappa, s=SMOOTHENING_FACTOR)
 
-sp_z = sc.make_splrep(dist_grid, z, s=SMOOTHENING_FACTOR)
-dzds   = sp_z.derivative(nu=1)(dist_grid)
-d2zds2 = sp_z.derivative(nu=2)(dist_grid)
-kappa  = abs(d2zds2) / (1.0 + dzds ** 2) ** 1.5
-sp_k   = sc.make_splrep(dist_grid, kappa, s=SMOOTHENING_FACTOR)
-
-results_validation[phys_key]["z"] = z
-results_validation[phys_key]["spline_z"]     = sp_z
-results_validation[phys_key]["spline_kappa"] = sp_k
-results_validation[phys_key]["kappa"]        = kappa
+    results_validation[phys_key]["z"] = z
+    results_validation[phys_key]["spline_z"]     = sp_z
+    results_validation[phys_key]["spline_kappa"] = sp_k
+    results_validation[phys_key]["kappa"]        = kappa
 
 # ── Cross comparison (validation vs calculation, different methods only) ──────
 comparisons = []
