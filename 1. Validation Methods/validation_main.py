@@ -28,9 +28,9 @@ VALIDATION_PREFIXES = [
 CALCULATION_PREFIXES = [
     "AHN5_DSM",
     "AHN5_DTM",
-    "EKF_curvature_validation"
-    "KISS_ICP"
-    "Z_positional_tracking"
+    "EKF_curvature_validation",
+    "KISS_ICP",
+    "Z_positional_tracking",
     "height-deriv_csf",
     "height-deriv_patchwork",
     "PCA_csf",
@@ -59,15 +59,17 @@ try:
         data = np.load(fpath, allow_pickle=True)
 
         method = str(data["method"].flat[0])
+        kappa_variants = [k for k in data.files if k.startswith("kappa")]
+        kappa_key = "kappa" if "kappa" in data.files else (kappa_variants[0] if kappa_variants else None)
         core = {
             "x":     data["x"] if "x" in data.files else None,
             "y":     data["y"]if "y" in data.files else None,
             "z":     data["z"] if "z" in data.files else None,
             "s":     data["s"] if "s" in data.files else None,
             "t":     data["t"] if "t" in data.files else None,
-            "kappa": data["kappa"] if "kappa" in data.files else None,
+            "kappa": data[kappa_key] if kappa_key else None,
         }
-        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t","kappa", "method")]
+        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "kappa", "method") and k != kappa_key]
         extras = {k: data[k] for k in extra_keys}
 
         results_validation[method] = {**core, **extras}
@@ -82,15 +84,17 @@ try:
         data = np.load(fpath, allow_pickle=True)
 
         method = str(data["method"].flat[0])
+        kappa_variants = [k for k in data.files if k.startswith("kappa")]
+        kappa_key = "kappa" if "kappa" in data.files else (kappa_variants[0] if kappa_variants else None)
         core = {
             "x":     data["x"] if "x" in data.files else None,
             "y":     data["y"] if "y" in data.files else None,
             "z":     data["z"] if "z" in data.files else None,
             "s":     data["s"] if "s" in data.files else None,
             "t":     data["t"] if "t" in data.files else None,
-            "kappa": data["kappa"] if "kappa" in data.files else None,
+            "kappa": data[kappa_key] if kappa_key else None,
         }
-        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "kappa", "method")]
+        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "kappa", "method") and k != kappa_key]
         extras = {k: data[k] for k in extra_keys}
 
         results_calculation[method] = {**core, **extras}
