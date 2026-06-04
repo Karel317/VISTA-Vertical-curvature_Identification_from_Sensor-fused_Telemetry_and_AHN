@@ -24,10 +24,10 @@ Usage (CLI):
 from __future__ import annotations
 
 import os
+import sys
 import argparse
 import math
 import struct
-import shutil
 import tempfile
 
 import numpy as np
@@ -39,6 +39,12 @@ from filterpy.kalman import KalmanFilter
 from mcap.reader import make_reader
 from mcap_ros2.decoder import DecoderFactory
 from mcap.writer import Writer as McapWriter
+
+# Shared cutting/loading helpers. Add this file's folder to sys.path so the import
+# resolves regardless of how the module is loaded (run_validations adds it already;
+# pipeline_validation loads modules by explicit path and does not).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from mcap_utils import cut_mcap, load_gps
 
 # ZED SDK (pyzed) is imported lazily inside _convert_svo_to_mcap, because it is
 # only needed when the IMU input is an SVO file. Running on an MCAP requires no
@@ -81,6 +87,11 @@ GPS_MATCH_DT   = 0.12                           # s — accept a GPS speed updat
 
 # SVO -> MCAP conversion (only used when the IMU input is an .svo/.svo2)
 SVO_WINDOW_S = 30.0                             # +/- s around TIME to convert (keep >= GPS_WINDOW and wide enough for WIN_AFTER m)
+
+# MCAP pre-cut: before reading, an MCAP input is sliced to a small window around
+# TIME and cached to a temp file, so the first run pays the scan cost once and
+# later runs read only the slice. Keep >= GPS_WINDOW and wide enough for WIN_AFTER m.
+CUT_WINDOW_S = 30.0                             # +/- s around TIME to keep in the cut MCAP
 
 
 # ── ROS2 message definitions (used when converting an SVO to MCAP) ───────────
@@ -278,16 +289,12 @@ def _convert_svo_to_mcap(svo_path, out_mcap_path, timestamp):
     orientation = sl.Orientation()
 
     total_frames = zed.get_svo_number_of_frames()
-    print(f"SVO: {os.path.basename(str(svo_path))}  ({total_frames} frames)")
-    print(f"Out (temp): {out_mcap_path}")
 
     start_ns = int((timestamp - SVO_WINDOW_S) * 1_000_000_000)
     end_ns   = int((timestamp + SVO_WINDOW_S) * 1_000_000_000)
 
     # Seek BEFORE enabling tracking — set_svo_position is unreliable while tracking is active
     start_frame = _svo_frame_at_ts(zed, sensors_data, start_ns, total_frames)
-    print(f"Converting slice ts in [{timestamp - SVO_WINDOW_S}, {timestamp + SVO_WINDOW_S}]s "
-          f"(start frame {start_frame})")
     zed.set_svo_position(start_frame)
 
     tracking_params = sl.PositionalTrackingParameters()
@@ -360,16 +367,49 @@ def _convert_svo_to_mcap(svo_path, out_mcap_path, timestamp):
                                        data=pose_bytes, publish_time=ts_ns)
 
                 frame += 1
-                if frame % 100 == 0:
-                    print(f"\r  converted {frame} frames", end="", flush=True)
 
             writer.finish()
     finally:
         zed.disable_positional_tracking()
         zed.close()
 
-    print(f"\nSVO conversion done — wrote {frame} frames to {out_mcap_path}")
     return out_mcap_path
+
+
+def _svo_to_mcap_cached(svo_path, timestamp, window_s):
+    """Convert an SVO to a windowed MCAP once, caching the result on disk.
+
+    Same caching idea as `_cut_mcap`: the ZED-SDK conversion (the slow part) runs
+    only on the first call; later calls with the same SVO/timestamp/window reuse
+    the cached MCAP in the system temp dir. The converted MCAP already contains
+    only the pose/IMU topics over [TIME ± window_s], so no further cut is needed.
+
+    Returns the path to the cached MCAP.
+    """
+    svo_path = str(svo_path)
+    if not os.path.exists(svo_path):
+        raise FileNotFoundError(f"SVO file not found: {svo_path}")
+
+    cache_dir = os.path.join(tempfile.gettempdir(), "mcap_cut_cache")
+    os.makedirs(cache_dir, exist_ok=True)
+
+    st = os.stat(svo_path)
+    stem = os.path.splitext(os.path.basename(svo_path))[0]
+    out_path = os.path.join(
+        cache_dir,
+        f"{stem}_svo_{int(timestamp)}_{int(window_s)}s_{st.st_size}_{int(st.st_mtime)}.mcap",
+    )
+
+    if os.path.exists(out_path):
+        print(f"Using cached SVO->MCAP: {out_path}")
+        return out_path
+
+    print(f"Converting SVO to MCAP (+/-{window_s:.0f}s around TIME; first run, then cached)...")
+    tmp_path = out_path + ".tmp"
+    _convert_svo_to_mcap(svo_path, tmp_path, timestamp)
+    os.replace(tmp_path, out_path)   # atomic: a partial conversion never looks cached
+    print(f"SVO->MCAP cached: {out_path}")
+    return out_path
 
 
 def _quaternion_to_pitch(qx, qy, qz, qw):
@@ -384,7 +424,6 @@ def _read_imu(imu_mcap, data):
     pose_data = {"t": [], "x": [], "y": [], "z": [], "qx": [], "qy": [], "qz": [], "qw": []}
     imu_raw   = {"t": [], "omega_z": []}
 
-    print("Reading ZED MCAP:", imu_mcap)
     with open(imu_mcap, "rb") as f:
         reader = make_reader(f, decoder_factories=[DecoderFactory()])
         for schema, channel, message, ros_msg in reader.iter_decoded_messages(
@@ -414,38 +453,16 @@ def _read_imu(imu_mcap, data):
             f"No messages on IMU topic '{IMU_TOPIC}' in {imu_mcap}. "
             "Check IMU_TOPIC.")
 
-    print(f"Pose samples : {len(pose_data['t'])}")
-    print(f"IMU  samples : {len(imu_raw['t'])}")
-
     data["pose_data"] = pose_data
     data["imu_raw"]   = imu_raw
     return data
 
 
 def _read_gps(gps_file, data, timestamp, gps_topic):
-    """Read a +/-GPS_WINDOW slice of GPS from the rosbag MCAP and project to RD New."""
-    gps_raw = {"t": [], "lat": [], "lon": [], "alt": []}
-
-    gps_start_ns = int((timestamp - GPS_WINDOW) * 1_000_000_000)
-    gps_end_ns   = int((timestamp + GPS_WINDOW) * 1_000_000_000)
-
-    print(f"Reading GPS MCAP ({2 * GPS_WINDOW:.0f}s window around TIME)...")
-    with open(gps_file, "rb") as f:
-        reader = make_reader(f, decoder_factories=[DecoderFactory()])
-        for schema, channel, message, ros_msg in reader.iter_decoded_messages(
-            topics=[gps_topic], start_time=gps_start_ns, end_time=gps_end_ns
-        ):
-            gps_raw["t"].append(message.publish_time / 1e9)
-            gps_raw["lat"].append(ros_msg.latitude)
-            gps_raw["lon"].append(ros_msg.longitude)
-            gps_raw["alt"].append(ros_msg.altitude)
-
-    if len(gps_raw["t"]) == 0:
-        raise RuntimeError(
-            f"No GPS messages on topic '{gps_topic}' within +/-{GPS_WINDOW}s of TIME. "
-            "Set gps_topic correctly or widen GPS_WINDOW.")
-
-    print(f"GPS samples : {len(gps_raw['t'])}")
+    """Load the GPS slice (shared cut + decode) and project it to RD New."""
+    # Shared with AHN5_validation via mcap_utils.load_gps: the bag is cut + decoded
+    # once per run and reused. GPS_WINDOW is the slice half-width.
+    gps_raw = load_gps(gps_file, gps_topic, timestamp, GPS_WINDOW)
 
     # Convert to Dutch RD New (EPSG:28992)
     transformer = Transformer.from_crs("EPSG:4326", "EPSG:28992", always_xy=True)
@@ -531,8 +548,6 @@ def _fuse_speed(data):
     pose_s = np.concatenate([[0.0], np.cumsum(pose_dist)])
     v_fused_at_pose = np.interp(pose_t, v_zed_t, v_fused)
 
-    print(f"EKF done. Mean fused speed: {v_fused.mean():.2f} m/s, max: {v_fused.max():.2f} m/s")
-
     data.update(dict(
         pose_t=pose_t, pose_x=pose_x, pose_y=pose_y,
         pose_dist=pose_dist, pose_s=pose_s,
@@ -553,7 +568,6 @@ def _elevation_profile(data, timestamp):
     pitch_raw  = _quaternion_to_pitch(pose_data["qx"], pose_data["qy"],
                                       pose_data["qz"], pose_data["qw"])
     pitch_bias = float(np.mean(pitch_raw))
-    print(f"Pitch bias: {pitch_bias:.2f} deg")
     pitch = pitch_raw - pitch_bias
 
     if SMOOTH_W > 0:
@@ -566,7 +580,6 @@ def _elevation_profile(data, timestamp):
     # Window around the reference time
     ref_idx = int(np.argmin(np.abs(pose_t - timestamp)))
     dt_err  = abs(pose_t[ref_idx] - timestamp)
-    print(f"Reference TIME={timestamp}, closest pose dt={dt_err:.3f}s (index {ref_idx})")
 
     s_rel = pose_s - pose_s[ref_idx]
     mask  = (s_rel >= -WIN_BEFORE) & (s_rel <= WIN_AFTER)
@@ -577,7 +590,6 @@ def _elevation_profile(data, timestamp):
     z_win         = imu_elevation[mask] - imu_elevation[mask][0]
     pitch_win     = pitch[mask]
     pitch_rad_win = np.radians(pitch_win)
-    print(f"Window: {s_win[0]:.1f} m to {s_win[-1]:.1f} m, {int(mask.sum())} samples")
 
     data.update(dict(
         pitch=pitch, imu_elevation=imu_elevation,
@@ -602,9 +614,6 @@ def _terrain_curvature(data):
     # Method B: direct pitch differentiation (valid for small pitch angles)
     kappa_terrain_pitch = np.gradient(pitch_rad_win, s_win)
 
-    print(f"kappa_terrain spline — max: {np.nanmax(kappa_terrain_spline):.4f} 1/m")
-    print(f"kappa_terrain pitch  — max: {np.nanmax(np.abs(kappa_terrain_pitch)):.4f} 1/m")
-
     data.update(dict(
         spline_z=sp_z,
         kappa_terrain_spline=kappa_terrain_spline,
@@ -624,14 +633,12 @@ def _path_curvature(data):
     omega_z_win = omega_z_all[mask]
     speed_win   = v_fused_at_pose[mask]
 
-    kappa_path = np.where(speed_win > MIN_SPEED, omega_z_win / speed_win, np.nan)
-
-    n_nan = int(np.sum(np.isnan(kappa_path)))
-    if np.isfinite(kappa_path).any():
-        print(f"kappa_path — max: {np.nanmax(np.abs(kappa_path)):.4f} 1/m")
-    else:
-        print("kappa_path — all samples below MIN_SPEED (all NaN)")
-    print(f"  NaN (speed < {MIN_SPEED} m/s): {n_nan} / {len(kappa_path)} samples")
+    # Divide only where speed is above MIN_SPEED; elsewhere leave NaN. Using
+    # np.divide with `where` avoids evaluating omega_z / 0 (np.where would still
+    # compute the division for every element and raise a divide-by-zero warning).
+    fast = speed_win > MIN_SPEED
+    kappa_path = np.full_like(speed_win, np.nan, dtype=float)
+    np.divide(omega_z_win, speed_win, out=kappa_path, where=fast)
 
     data.update(dict(omega_z_win=omega_z_win, speed_win=speed_win, kappa_path=kappa_path))
     return data
@@ -699,11 +706,17 @@ def _plot(data):
 
 
 def _save_output(gps_file, data, timestamp, output_location):
-    """Save .npz profiles compatible with the rest of the validation pipeline."""
-    parts = gps_file.replace("/", os.sep).split(os.sep)
-    date_folder = parts[-5]
-    time_folder = parts[-3]
-    save_dir = os.path.join(output_location, date_folder, time_folder, str(int(timestamp)))
+    """Save .npz profiles compatible with the rest of the validation pipeline.
+
+    The output folder is derived from the timestamp (datetime.fromtimestamp), the
+    same convention as lidar_pipeline_unified and the other validation methods, so
+    everything lands in output_location/<date>/<time>/<int(timestamp)>.
+    (gps_file is kept for signature compatibility but no longer sets the path.)
+    """
+    from datetime import datetime
+    dt = datetime.fromtimestamp(timestamp)
+    save_dir = os.path.join(output_location, dt.strftime("%Y_%m_%d"),
+                            dt.strftime("%H_%M_%S"), str(int(timestamp)))
     os.makedirs(save_dir, exist_ok=True)
 
     t_int = int(timestamp)
@@ -726,8 +739,6 @@ def _save_output(gps_file, data, timestamp, output_location):
         gps_lat=np.array(data["gps_raw"]["lat"]),
     )
     print(f"Saved {method} -> {fpath}")
-    print(f"  Core   : x, y, z, s, t, method")
-    print(f"  Extras : kappa_terrain_spline, kappa_terrain_pitch, kappa_path, gps_lon, gps_lat")
 
     # Positional-tracking elevation profile
     method = "Z_positional_tracking"
@@ -742,7 +753,6 @@ def _save_output(gps_file, data, timestamp, output_location):
         method=np.array([method]),
     )
     print(f"Saved {method} -> {fpath}")
-    print(f"  Core   : x, y, z, s, t, method")
 
 
 # ── Main functions ─────────────────────────────────────────────────────────
@@ -750,37 +760,39 @@ def _save_output(gps_file, data, timestamp, output_location):
 def run(imu_input, gps_file, timestamp, gps_topic, plot, output_location):
     """Run the full IMU + GPS curvature validation.
 
-    If ``imu_input`` is an SVO recording it is first converted to a temporary
-    MCAP (a slice around ``timestamp``), which is deleted once the run finishes.
+    Inputs are cut/converted to small cached MCAP slices FIRST (before any
+    reading or computation): an SVO IMU input is converted to a windowed MCAP,
+    an MCAP IMU input is cut to its pose/IMU topics, and the GPS MCAP is cut to
+    its GPS topic. All three are cached in the system temp dir, so the first run
+    pays the cost once and later runs reuse the slices.
     """
     timestamp = float(timestamp)
 
+    # ── Step 1: cut/convert every input to a cached MCAP slice (done first) ────
     if _is_svo(imu_input):
-        tmpdir = tempfile.mkdtemp(prefix="svo2mcap_")
-        imu_mcap = os.path.join(tmpdir, "imu_from_svo.mcap")
+        # SVO: convert (and window) to a cached MCAP via the ZED SDK.
+        imu_mcap = _svo_to_mcap_cached(imu_input, timestamp, SVO_WINDOW_S)
     else:
-        tmpdir = None
-        imu_mcap = imu_input
+        # MCAP: cut to a window around TIME, keeping only the pose/IMU topics.
+        imu_mcap = cut_mcap(imu_input, timestamp, CUT_WINDOW_S,
+                            topics=[POSE_TOPIC, IMU_TOPIC])
 
-    try:
-        if tmpdir is not None:
-            _convert_svo_to_mcap(imu_input, imu_mcap, timestamp)
-
-        data = {}
-        _read_imu(imu_mcap, data)
-        _read_gps(gps_file, data, timestamp, gps_topic)
-        _fuse_speed(data)
-        _elevation_profile(data, timestamp)
-        _terrain_curvature(data)
-        _path_curvature(data)
-        _positional_tracking_profile(data, timestamp)
-        _save_output(gps_file, data, timestamp, output_location)
-        if plot:
-            _plot(data)
-        return data
-    finally:
-        if tmpdir is not None:
-            shutil.rmtree(tmpdir, ignore_errors=True)
+    # ── Step 2: read the slices and compute ───────────────────────────────────
+    # GPS is loaded through the shared mcap_utils.load_gps (cut + decoded once and
+    # reused by AHN5_validation in the same run); pass the ORIGINAL gps_file so the
+    # cache key matches AHN5's.
+    data = {}
+    _read_imu(imu_mcap, data)
+    _read_gps(gps_file, data, timestamp, gps_topic)
+    _fuse_speed(data)
+    _elevation_profile(data, timestamp)
+    _terrain_curvature(data)
+    _path_curvature(data)
+    _positional_tracking_profile(data, timestamp)
+    _save_output(gps_file, data, timestamp, output_location)
+    if plot:
+        _plot(data)
+    return data
 
 
 if __name__ == "__main__":

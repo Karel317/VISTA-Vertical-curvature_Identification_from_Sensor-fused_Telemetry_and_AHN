@@ -42,8 +42,8 @@ TIMESTAMP  = "1779439917.972930459"
 HERE = Path(__file__).parent
 MODULES = [
     ("validation_curvature", HERE / "validation_curvature.py"),
-    ("physical_meas",        HERE / "Physical_meas.py"),
-    ("run_kiss_icp",         HERE / "KISS ICP" / "run_kiss_icp.py"),
+    ("physical_meas",        HERE / "Python_files" / "Physical_meas_validation.py"),
+    ("kiss_icp_validation",  HERE / "Python_files" / "KISS_ICP_validation.py"),
     # ("validation_main",    HERE / "validation_main.py"),   # optional final aggregate+plot
 ]
 

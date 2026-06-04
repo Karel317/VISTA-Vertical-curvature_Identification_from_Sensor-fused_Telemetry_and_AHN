@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 from mcap.reader import make_reader
 from mcap_ros2.decoder import DecoderFactory
@@ -10,6 +11,11 @@ import rasterio
 import io
 import math
 import scipy.interpolate as sc
+
+# Shared cutting/loading helpers. Add this file's folder to sys.path so the import
+# resolves regardless of how the module is loaded.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from mcap_utils import load_gps
 # ============================================================
 # SETTINGS — edit these before running
 # ============================================================
@@ -20,6 +26,10 @@ OUTPUT_PATH =   r"D:\Validation_results"
 GPS_TOPIC  = "/navsat_topic"           # set to None to list topics
 
 TIME               = 1779439917.972930459
+
+# GPS slice half-width (s) around TIME. Must match Validation_curvature_IMU_GPS's
+# GPS_WINDOW so the shared mcap_utils.load_gps decode is reused across both modules.
+GPS_WINDOW         = 30.0
 
 # Strip geometry  
 X_BACK             = -5.0                      # m behind the bike
@@ -47,31 +57,23 @@ AHN5_LAYERS = {
 # ── Helper functions ─────────────────────────────────────────────────────────
 
 def _read_GPS(INPUT_FILE, GPS_TOPIC):
-    gps_coords = {"t": [], "lat": [], "lon": []}
-    print("Reading GPS bag:", INPUT_FILE)
-
-    with open(INPUT_FILE, "rb") as f:
-        reader = make_reader(f, decoder_factories=[DecoderFactory()])
-
-        if GPS_TOPIC is None:
-            print("\nGPS_TOPIC is None. Choose from the available topics:")
+    # Topic-listing debug path: read the full bag's summary and stop.
+    if GPS_TOPIC is None:
+        print("\nGPS_TOPIC is None. Choose from the available topics:")
+        with open(INPUT_FILE, "rb") as f:
+            reader = make_reader(f, decoder_factories=[DecoderFactory()])
             summary = reader.get_summary()
             for ch in summary.channels.values():
                 n = summary.statistics.channel_message_counts.get(ch.id, "?")
                 schema = summary.schemas.get(ch.schema_id, None)
                 schema_name = schema.name if schema else "unknown"
                 print(f"  {ch.topic}  —  {n} messages  [{schema_name}]")
-            raise SystemExit("Set GPS_TOPIC and re-run this cell.")
+        raise SystemExit("Set GPS_TOPIC and re-run this cell.")
 
-        for schema, channel, message, ros_msg in reader.iter_decoded_messages(topics=[GPS_TOPIC]):
-            gps_coords["t"].append(message.publish_time / 1e9)
-            gps_coords["lat"].append(ros_msg.latitude)
-            gps_coords["lon"].append(ros_msg.longitude)
-
-    if len(gps_coords["t"]) == 0:
-        raise RuntimeError(f"No messages on topic '{GPS_TOPIC}'. "
-                        "Set GPS_TOPIC = None to list available topics.")
-    return gps_coords
+    # Normal path: cut (disk-cached) + decode via the shared loader, so the bag
+    # is read once per run and reused by Validation_curvature_IMU_GPS.
+    gps = load_gps(INPUT_FILE, GPS_TOPIC, TIME, GPS_WINDOW)
+    return {"t": gps["t"], "lat": gps["lat"], "lon": gps["lon"]}
 
 def _transform_coords(gps_coords): # GPS coordinates are a different system then the coordinates used in the heightmap, hence need for transformation
     lats = gps_coords["lat"]
@@ -121,6 +123,8 @@ def _calculating_box_for_query(gps_coords, rd_xs, rd_ys):
     sample_xs_rd = ref_rd_x + s_samples * heading_x
     sample_ys_rd = ref_rd_y + s_samples * heading_y
    
+    gps_coords["rd_xs"] = rd_xs
+    gps_coords["rd_ys"] = rd_ys
     gps_coords["s_samples"] = s_samples
     gps_coords["sample_xs_rd"] = sample_xs_rd
     gps_coords["sample_ys_rd"] = sample_ys_rd
@@ -131,7 +135,7 @@ def _calculating_box_for_query(gps_coords, rd_xs, rd_ys):
     gps_coords["heading_deg"] = heading_deg
     return gps_coords
 
-def _query_ahn5(gps_coords, wcs_url, coverage, label):
+def _query_ahn5(gps_coords, wcs_url, coverage):
     s_samples =  gps_coords["s_samples"]
 
     sample_xs_rd = gps_coords["sample_xs_rd"]
@@ -173,12 +177,11 @@ def _query_ahn5(gps_coords, wcs_url, coverage, label):
                 continue
             if MIN_HEIGHT < v < MAX_HEIGHT:
                 z[i] = v
-        gps_coords["z"] = z
-    return gps_coords
+    return z
 
 def _build_profile(name, valid, z_raw, gps_coords):
     s_samples = gps_coords["s_samples"]
-    v = valid[name]
+    v = valid
     if not v.all():
         z_filled = np.interp(s_samples, s_samples[v], z_raw[v])
     else:
@@ -193,12 +196,18 @@ def _build_profile(name, valid, z_raw, gps_coords):
     d2zdx2 = spline.derivative(nu=2)(s_samples)
     slope_deg = np.degrees(np.arctan(dzdx))
     kappa     = abs(d2zdx2) / (1.0 + dzdx ** 2) ** 1.5
+    with np.errstate(divide="ignore"):
+        r = np.where(kappa > 0, 1.0 / kappa, np.inf)
 
     return {
         "s":           s_samples,
+        "x":           s_samples,
         "z":           z_relative,
         "slope_deg":   slope_deg,
         "kappa":       kappa,
+        "r":           r,
+        "ref_z_nap":   ref_z_nap,
+        "ref_time":    TIME,
         "method":      f"AHN5 {name}",
         "spline":      spline,
     }
@@ -212,7 +221,7 @@ def _plot(gps_coords, profiles, valid, z_samples):
     sample_ys_rd = gps_coords["sample_ys_rd"]
     ref_rd_x = gps_coords["ref_rd_x"]
     ref_rd_y = gps_coords["ref_rd_y"]
-    heading_x = gps_coords["heading_X"]
+    heading_x = gps_coords["heading_x"]
     heading_y = gps_coords["heading_y"]
     heading_deg = gps_coords["heading_deg"]
 
@@ -292,11 +301,14 @@ def _plot(gps_coords, profiles, valid, z_samples):
     plt.show()
 
 def _save_output(input_file, profiles):
-
-    parts = input_file.replace("/", os.sep).split(os.sep)
-    date_folder = parts[-5]
-    time_folder = parts[-3]
-    SAVE_DIR = os.path.join(OUTPUT_PATH, date_folder, time_folder, str(int(TIME)))
+    # Output folder is derived from the timestamp (datetime.fromtimestamp), the
+    # same convention as lidar_pipeline_unified, so every validation method and
+    # the calculation pipeline write into the same OUTPUT_PATH/<date>/<time>/<ts>
+    # folder. (input_file is no longer used for the path.)
+    from datetime import datetime
+    dt = datetime.fromtimestamp(TIME)
+    SAVE_DIR = os.path.join(OUTPUT_PATH, dt.strftime("%Y_%m_%d"),
+                            dt.strftime("%H_%M_%S"), str(int(TIME)))
     os.makedirs(SAVE_DIR, exist_ok=True)
 
     def __save_profile(p):
@@ -306,7 +318,7 @@ def _save_output(input_file, profiles):
         np.savez_compressed(
             fpath,
             x          = p["x"],
-            y          = None,
+            y          = np.array([]),
             z          = p["z"],
             s          = p["x"],
             t          = np.array([p["ref_time"]]),
@@ -324,32 +336,41 @@ def _save_output(input_file, profiles):
 
 # ── Main functions ─────────────────────────────────────────────────────────
 
-def run(input_file, timestamp, gps_topic, plot):
+def run(input_file, timestamp, gps_topic, plot, output_path=OUTPUT_PATH):
+    global TIME, OUTPUT_PATH
+    TIME = float(timestamp)
+    OUTPUT_PATH = output_path
     gps_coords = _read_GPS(input_file, gps_topic)
     rd_xs, rd_ys = _transform_coords(gps_coords)
     gps_coords = _calculating_box_for_query(gps_coords, rd_xs, rd_ys)
     z_samples = {}
     valid     = {}
     for name, layer in AHN5_LAYERS.items():
-        z_samples[name] = _query_ahn5(layer["wcs_url"], layer["coverage"], f"AHN5 {name}")
+        z_samples[name] = _query_ahn5(gps_coords, layer["wcs_url"], layer["coverage"])
         valid[name]     = ~np.isnan(z_samples[name])
-    profiles = {name: _build_profile(name, valid[name], z_samples[name]) for name in AHN5_LAYERS}
+    profiles = {name: _build_profile(name, valid[name], z_samples[name], gps_coords) for name in AHN5_LAYERS}
     _save_output(input_file, profiles)
     if plot:
         _plot(gps_coords, profiles, valid, z_samples)
 
 
-if __name__ == "__main__":
+def _str2bool(val):
+    if isinstance(val, bool):
+        return val
+    return str(val).strip().lower() in ("1", "true", "t", "yes", "y")
+
+if __name__ == "__main__": # I
     parser = argparse.ArgumentParser(description="AHN5 curvature validation.")
     parser.add_argument("--input-file", default=INPUT_FILE,
                         help="MCAP path with GPS data(default: %(default)s)")
     parser.add_argument("--output-location", default=OUTPUT_PATH,
                         help="General output map, will create a date and time folder in this folder (default: %(default)s)")
-    parser.add_argument("--timestamp", default=TIME,
+    parser.add_argument("--timestamp", type=float, default=TIME,
                         help="Reference Unix timestamp (default: %(default)s)")
     parser.add_argument("--gps_topic", default=GPS_TOPIC,
-                        help="local path to the correct topic (default: %(default)s)")    
-    parser.add_argument("--plot", default=False,
+                        help="local path to the correct topic (default: %(default)s)")
+    parser.add_argument("--plot", type=_str2bool, nargs="?", const=True, default=False,
                         help="Set true for plots (default: %(default)s)")
     args = parser.parse_args()
-    run(args.input_file, args.timestamp, args.gps_topic, args.plot)
+    run(args.input_file, args.timestamp, args.gps_topic, args.plot,
+        output_path=args.output_location)

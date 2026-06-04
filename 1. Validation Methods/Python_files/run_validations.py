@@ -34,7 +34,7 @@ GPS_TOPIC   = "/navsat_topic"
 PLOT        = False                         # note: each task's plot blocks until its window is closed
 
 # Input files
-GPS_MCAP  = r"D:\Data_gathered\2026_05_22\Rosbag\10_50_00\rosbag\rosbag_0.mcap"
+MAIN_MCAP  = r"D:\Data_gathered\2026_05_22\Rosbag\10_50_00\rosbag\rosbag_0.mcap"
 IMU_INPUT = r"D:\Data_gathered\2026_05_22\Camera\10_50_00\back_22_05_2026-10_50_00.mcap"  # .mcap / .svo / .svo2
 
 # ── REGISTRY ─────────────────────────────────────────────────────────────────
@@ -44,19 +44,22 @@ IMU_INPUT = r"D:\Data_gathered\2026_05_22\Camera\10_50_00\back_22_05_2026-10_50_
 REGISTRY = {
     "ahn5": (
         True, "AHN5_validation",
-        lambda m: m.run(GPS_MCAP, TIME, GPS_TOPIC, PLOT),
+        lambda m: m.run(MAIN_MCAP, TIME, GPS_TOPIC, PLOT),
     ),
-    "curvature": (
+    "IMU_GPS": (
         True, "Validation_curvature_IMU_GPS",
-        lambda m: m.run(IMU_INPUT, GPS_MCAP, TIME, GPS_TOPIC, PLOT, OUTPUT_PATH),
+        lambda m: m.run(IMU_INPUT, MAIN_MCAP, TIME, GPS_TOPIC, PLOT, OUTPUT_PATH),
     ),
-
+    "KISS_ICP": (
+        True, "KISS_ICP_validation",
+        lambda m: m.run(MAIN_MCAP, TIME, PLOT, OUTPUT_PATH),
+    ),
     # ── add more validations here, same pattern ──
     # "lidar": (
     #     True, "LiDAR_validation",
     #     lambda m: m.run(LIDAR_INPUT, TIME, GPS_TOPIC, PLOT, OUTPUT_PATH),
     # ),
-}
+    }
 
 # ── Runner ───────────────────────────────────────────────────────────────────
 

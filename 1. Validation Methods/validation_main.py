@@ -169,7 +169,7 @@ if PHYSICAL_MEASUREMENT:
         # Logic here is we are DISTANCE_FROM_PHYS_MEAS_POINT away from the first physical measurement point so we assign z as 0
         # Untill this distance is reached, then we take the points of the physical measurement up until 20m.
         if d >= DISTANCE_FROM_PHYS_MEAS_POINT and phys_idx < len(results_validation[phys_key]["z"]):
-            z[i] = results_validation[phys_key]["z"][phys_idx] / 100 # cm to m
+            z[i] = results_validation[phys_key]["z"][phys_idx] # already in meters
             phys_idx += 1
 
     sp_z = sc.make_splrep(dist_grid, z, s=SMOOTHENING_FACTOR)
