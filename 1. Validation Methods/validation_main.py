@@ -17,15 +17,20 @@ import matplotlib.pyplot as plt
 
 PHYSICAL_MEASUREMENT = False
 
-RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_42_19\1779439339"
+RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_51_57\1779439917"
 DISTANCE_FROM_PHYS_MEAS_POINT = 3.1711242130880257 #Measured in foxglove or inbetween 2 gps points,
 BOTTOM_LIMIT_KAPPA = 1e-6 # Minimum curvature to show on the plot (to have a better visualisation)
 # ── Prefixes of the result files to load (filenames without .npz extension) ──
 VALIDATION_PREFIXES = [
-    "RANSAC_patchwork",
+    "Physical_meas_Station_Brug",
 ]
 
 CALCULATION_PREFIXES = [
+    "AHN5_DSM",
+    "AHN5_DTM",
+    "EKF_curvature_validation"
+    "KISS_ICP"
+    "Z_positional_tracking"
     "height-deriv_csf",
     "height-deriv_patchwork",
     "PCA_csf",
