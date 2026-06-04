@@ -409,6 +409,10 @@ def _read_imu(imu_mcap, data):
         raise RuntimeError(
             f"No messages on pose topic '{POSE_TOPIC}' in {imu_mcap}. "
             "Check POSE_TOPIC / IMU_TOPIC.")
+    if len(imu_raw["t"]) == 0:
+        raise RuntimeError(
+            f"No messages on IMU topic '{IMU_TOPIC}' in {imu_mcap}. "
+            "Check IMU_TOPIC.")
 
     print(f"Pose samples : {len(pose_data['t'])}")
     print(f"IMU  samples : {len(imu_raw['t'])}")
@@ -510,11 +514,14 @@ def _fuse_speed(data):
         kf.R = R_zed
         kf.update(np.array([[v_zed_raw[i]]]))
 
-        # Secondary update: GPS speed when a GPS sample is close in time
-        idx_gps = np.searchsorted(v_gps_t, v_zed_t[i])
-        if 0 < idx_gps < len(v_gps_t):
-            dt_gps = abs(v_gps_t[idx_gps] - v_zed_t[i])
-            if dt_gps < GPS_MATCH_DT:   # within ~half a GPS epoch
+        # Secondary update: GPS speed when a GPS sample is close in time.
+        # searchsorted gives an insertion index; the nearest sample may be at
+        # that index or the one before it, so check both neighbours.
+        ins = np.searchsorted(v_gps_t, v_zed_t[i])
+        candidates = [j for j in (ins - 1, ins) if 0 <= j < len(v_gps_t)]
+        if candidates:
+            idx_gps = min(candidates, key=lambda j: abs(v_gps_t[j] - v_zed_t[i]))
+            if abs(v_gps_t[idx_gps] - v_zed_t[i]) < GPS_MATCH_DT:
                 kf.R = R_gps
                 kf.update(np.array([[v_gps_raw[idx_gps]]]))
 
@@ -706,8 +713,8 @@ def _save_output(gps_file, data, timestamp, output_location):
     fpath = os.path.join(save_dir, f"{method}_{t_int}.npz")
     np.savez_compressed(
         fpath,
-        x=None,
-        y=None,
+        x=np.array([]),
+        y=np.array([]),
         z=data["z_win"],
         s=data["s_win"],
         t=np.array([timestamp]),
@@ -727,8 +734,8 @@ def _save_output(gps_file, data, timestamp, output_location):
     fpath = os.path.join(save_dir, f"{method}_{t_int}.npz")
     np.savez_compressed(
         fpath,
-        x=None,
-        y=None,
+        x=np.array([]),
+        y=np.array([]),
         z=data["z_pos_win"],
         s=data["s_win"],
         t=np.array([timestamp]),
@@ -790,7 +797,7 @@ if __name__ == "__main__":
                         help="Reference Unix timestamp (default: %(default)s)")
     parser.add_argument("--gps_topic", default=GPS_TOPIC,
                         help="GPS topic name (default: %(default)s)")
-    parser.add_argument("--plot", default=False,
-                        help="Set true for plots (default: %(default)s)")
+    parser.add_argument("--plot", action="store_true",
+                        help="Show plots")
     args = parser.parse_args()
     run(args.imu_file, args.gps_file, args.timestamp, args.gps_topic, args.plot, args.output_location)
