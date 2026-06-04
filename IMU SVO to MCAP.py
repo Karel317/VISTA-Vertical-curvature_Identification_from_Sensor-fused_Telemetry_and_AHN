@@ -19,8 +19,14 @@ from mcap.writer import Writer as McapWriter
 # ── Hardcoded paths (set these to run directly from IDE) ─────────────────────
 # Leave SVO_PATH as an empty string to use command-line arguments instead.
 
-SVO_PATH = r"D:\Data_gathered\2026_05_22\Camera\10_40_00\back_22_05_2026-10_40_00.svo2"     # e.g. r"C:\recordings\my_recording.svo"
+SVO_PATH = r"D:\Data_gathered\2026_05_22\Camera\10_50_00\front_22_05_2026-10_50_00.svo2"     # e.g. r"C:\recordings\my_recording.svo"
 OUTPUT_PATH = r""    # leave empty to auto-generate alongside the SVO file
+
+# ── Time-range filter ─────────────────────────────────────────────────────────
+# Set both to Unix timestamps (seconds, float) to process only that slice.
+# Leave as 0.0 to process the entire file.
+START_UNIX_S = 1779439914.817100912   # e.g. 1716372600.0
+END_UNIX_S   = 1779439925.810906095   # e.g. 1716372660.0
 
 
 # ── ROS2 message definitions (ros2msg schema encoding) ───────────────────────
@@ -155,6 +161,25 @@ def encode_pose_stamped(
     e.float64(qx); e.float64(qy); e.float64(qz); e.float64(qw)
     return e.to_bytes()
 
+# ── SVO timestamp seek ────────────────────────────────────────────────────────
+
+def _svo_frame_at_ts(zed: sl.Camera, sensors_data: sl.SensorsData,
+                     target_ns: int, total_frames: int) -> int:
+    """Binary-search the SVO for the first frame whose IMU timestamp >= target_ns."""
+    lo, hi = 0, total_frames - 1
+    while lo < hi:
+        mid = (lo + hi) // 2
+        zed.set_svo_position(mid)
+        zed.grab()
+        zed.get_sensors_data(sensors_data, sl.TIME_REFERENCE.IMAGE)
+        ts = sensors_data.get_imu_data().timestamp.get_nanoseconds()
+        if ts < target_ns:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -190,9 +215,6 @@ def main() -> None:
     if status != sl.ERROR_CODE.SUCCESS:
         sys.exit(f"ZED open failed: {status}")
 
-    tracking_params = sl.PositionalTrackingParameters()
-    zed.enable_positional_tracking(tracking_params)
-
     pose = sl.Pose()
     sensors_data = sl.SensorsData()
     translation = sl.Translation()
@@ -201,6 +223,20 @@ def main() -> None:
     total_frames = zed.get_svo_number_of_frames()
     print(f"SVO: {svo_path.name}  ({total_frames} frames)")
     print(f"Out: {output_path}")
+
+    start_ns = int(START_UNIX_S * 1_000_000_000) if START_UNIX_S else 0
+    end_ns   = int(END_UNIX_S   * 1_000_000_000) if END_UNIX_S   else 0
+
+    # Seek BEFORE enabling tracking — set_svo_position is unreliable while tracking is active
+    if start_ns:
+        start_frame = _svo_frame_at_ts(zed, sensors_data, start_ns, total_frames)
+        print(f"Seeking to frame {start_frame} (ts >= {START_UNIX_S}s)")
+        zed.set_svo_position(start_frame)
+    if end_ns:
+        print(f"Will stop at ts > {END_UNIX_S}s")
+
+    tracking_params = sl.PositionalTrackingParameters()
+    zed.enable_positional_tracking(tracking_params)
 
     # ── MCAP writer ───────────────────────────────────────────────────────────
     with open(output_path, "wb") as f:
@@ -241,6 +277,8 @@ def main() -> None:
             imu_data = sensors_data.get_imu_data()
 
             ts_ns = imu_data.timestamp.get_nanoseconds()
+            if end_ns and ts_ns > end_ns:
+                break
             sec = ts_ns // 1_000_000_000
             nsec = ts_ns % 1_000_000_000
 

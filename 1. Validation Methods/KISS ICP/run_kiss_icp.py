@@ -11,9 +11,9 @@ from kiss_icp.datasets import dataset_factory
 # SETTINGS
 # =============================================================================
 
-DATASET_PATH = Path(r"D:\Data_gathered\2026_05_22\Rosbag\10_40_00\rosbag\rosbag_0.mcap")   # path to mcap file
-TOPIC        = "/rslidar/helios_L"   # Lidar topic
-
+DATASET_PATH = Path(r"C:\Users\Leons\OneDrive - Delft University of Technology\BEP\Users\kuitbrug_Users_OneDrive - Delft University of Technology.mcap")   # path to mcap file
+TOPIC        = "/rslidar/M1P_deskewed"   # Lidar topic
+SHORTENED = True
 CUSTOM_PARAMETERS = False # Set to True to override individual parameters below instead of using kiss_icp.yaml
 LIVE_VISUALIZE = False   # set to True to see a live visualization of the odometry results as they are computed (can slow down processing)
 
@@ -33,23 +33,27 @@ with open(YAML_PATH, "r") as f:
 
 if CUSTOM_PARAMETERS:
     config["data"]["deskew"]    = False
-    config["data"]["max_range"] = 40.0
-    config["data"]["min_range"] = 1.0
+    config["data"]["max_range"] = 30.0
+    config["data"]["min_range"] = 3.0
 
-    config["mapping"]["voxel_size"]           = 0.3
-    config["mapping"]["max_points_per_voxel"] = 20
+    config["mapping"]["voxel_size"]           = 0.15
+    config["mapping"]["max_points_per_voxel"] = 5
 
     config["registration"]["max_num_iterations"]    = 500
     config["registration"]["convergence_criterion"] = 0.0001
-    config["adaptive_threshold"]["min_motion_th"]   = 0.05
+    config["adaptive_threshold"]["min_motion_th"]   = 0.01
 
 # =============================================================================
 # OUTPUT DIRECTORY  — "KISS ICP results/<dataset_name>/"
 # =============================================================================
 
 # Derive folder name from path:
-_date = DATASET_PATH.parts[-5] 
-_time = DATASET_PATH.parts[-3]
+if SHORTENED:
+    _date = DATASET_PATH.parts[-2]      # folder name  e.g. "2026_05_22"
+    _time = DATASET_PATH.stem[-8:]      # last 8 chars e.g. "10_50_00"
+else:
+    _date = DATASET_PATH.parts[-5] 
+    _time = DATASET_PATH.parts[-3]
 RESULTS_DIR = SCRIPT_DIR / "KISS ICP results" / f"{_date} {_time}"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -79,6 +83,7 @@ pipeline = OdometryPipeline(
     visualize=LIVE_VISUALIZE,
 )
 pipeline.run()
+_active_config.unlink(missing_ok=True)
 
 poses      = pipeline.poses   # list of N 4x4 numpy arrays (SE3)
 timestamps = pipeline.times   # list of N timestamps (seconds)

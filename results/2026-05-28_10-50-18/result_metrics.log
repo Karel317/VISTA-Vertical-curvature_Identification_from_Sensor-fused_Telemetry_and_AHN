@@ -1,0 +1,7 @@
+--- Results for McapDataloader Sequence kuitbrug_Users_OneDrive - Delft University of Technology ---
++-------------------+-------+-------+
+|            Metric | Value | Units |
++===================+=======+=======+
+| Average Frequency |   9   | Hz    |
+|   Average Runtime |  103  | ms    |
++-------------------+-------+-------+

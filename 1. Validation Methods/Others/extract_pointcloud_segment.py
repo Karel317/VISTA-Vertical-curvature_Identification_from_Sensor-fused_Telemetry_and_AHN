@@ -1,7 +1,3 @@
-# TODO
-# Not finished, it does work but its so many points and it saves a 1.5gb file in the repo
-# I need to downsample the point cloud, maybe compress it too
-#
 from pathlib import Path
 import numpy as np
 import open3d as o3d
@@ -13,16 +9,16 @@ from mcap_ros2.decoder import DecoderFactory
 # SETTINGS
 # =============================================================================
 
-DATASET_PATH = Path(r"D:\Rosbags\29 april\2026_04_29\15_20_00\rosbag\rosbag_0.mcap")
+DATASET_PATH = Path(r"C:\Users\Leons\OneDrive - Delft University of Technology\BEP\rosbag_0.mcap")
 
-T_START     = 1777468956.122513909   # paste begin timestamp from Foxglove
-T_END       = 1777468976.117642921   # paste end timestamp from Foxglove
-TIME_MARGIN = 10.0                   # seconds before/after to catch approach/departure points
+T_START     = 1779439445.872552611   # paste begin timestamp from Foxglove
+T_END       = 1779439446.872552611   # paste end timestamp from Foxglove
+TIME_MARGIN = 0.5                   # seconds before/after to catch approach/departure points
 
 LIDAR_TOPICS = [
     "/rslidar/M1P_deskewed",
-    "/rslidar/helios_R",
-    "/rslidar/helios_L",
+    #"/rslidar/helios_R",
+    #"/rslidar/helios_L",
 ]
 
 # =============================================================================
@@ -48,13 +44,7 @@ SENSOR_TRANSFORMS = {
 # RESULTS DIRECTORY  (same naming as run_kiss_icp.py)
 # =============================================================================
 
-SCRIPT_DIR = Path(__file__).parent
-_date = DATASET_PATH.parts[-4]   # e.g. "29 april"
-_time = DATASET_PATH.parts[-3]   # e.g. "15_20_00"
-RESULTS_DIR = SCRIPT_DIR / "KISS ICP results" / f"{_date} {_time}"
-
-OUTPUT_PATH = RESULTS_DIR / f"segment_{T_START:.0f}_{T_END:.0f}.ply"
-
+RESULTS_DIR = Path(r"C:\Users\Leons\lidar-ground-segmentation2\1. Validation Methods\KISS ICP\KISS ICP results\2026_05_22 10_40_00")
 # =============================================================================
 # HELPERS
 # =============================================================================
@@ -168,8 +158,8 @@ t_hi = T_END   + TIME_MARGIN
 print(f"\nExtracting scans in [{t_lo:.2f}, {t_hi:.2f}] s  "
       f"(window {T_END - T_START:.1f} s + {TIME_MARGIN:.0f} s margin each side)")
 
-all_points  = []
-scan_counts = {topic: 0 for topic in LIDAR_TOPICS}
+points_per_topic = {topic: [] for topic in LIDAR_TOPICS}
+scan_counts      = {topic: 0  for topic in LIDAR_TOPICS}
 
 with open(DATASET_PATH, "rb") as f:
     reader = make_reader(f, decoder_factories=[DecoderFactory()])
@@ -189,24 +179,46 @@ with open(DATASET_PATH, "rb") as f:
         pts_h   = np.hstack([pts, np.ones((len(pts), 1), dtype=np.float32)])
         pts_world = (T_total @ pts_h.T).T[:, :3]
 
-        all_points.append(pts_world)
+        points_per_topic[channel.topic].append(pts_world)
         scan_counts[channel.topic] += 1
 
 print("\nScans used per sensor:")
 for topic, count in scan_counts.items():
     print(f"  {topic:<35}  {count} scans")
 
+all_points = [p for chunks in points_per_topic.values() for p in chunks]
+
 if not all_points:
     print("\nNo points found — check T_START / T_END against the bag timestamps.")
 else:
     # ==========================================================================
-    # STEP 6 — Save PLY
+    # STEP 6 — Visualise with Open3D (one colour per sensor)
     # ==========================================================================
 
-    cloud = np.vstack(all_points)
-    print(f"\nTotal points: {len(cloud):,}")
+    SENSOR_COLOURS = [
+        [1.0, 0.4, 0.0],   # orange  — M1P
+        [0.0, 0.6, 1.0],   # blue    — helios_R
+        [0.2, 0.8, 0.2],   # green   — helios_L
+    ]
 
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(cloud.astype(np.float64))
-    o3d.io.write_point_cloud(str(OUTPUT_PATH), pcd)
-    print("File Saved to")
+    geometries = []
+    total = 0
+    for colour, (topic, chunks) in zip(SENSOR_COLOURS, points_per_topic.items()):
+        if not chunks:
+            continue
+        cloud = np.vstack(chunks).astype(np.float64)
+        total += len(cloud)
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(cloud)
+        pcd.paint_uniform_color(colour)
+        geometries.append(pcd)
+
+    print(f"\nTotal points: {total:,}")
+    print("Opening Open3D viewer  (orange=M1P, blue=helios_R, green=helios_L) ...")
+    o3d.visualization.draw_geometries(
+        geometries,
+        window_name=f"Segment {T_START:.0f} – {T_END:.0f}",
+        width=1280,
+        height=720,
+        point_show_normal=False,
+    )
