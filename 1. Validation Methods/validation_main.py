@@ -20,24 +20,32 @@ PHYSICAL_MEASUREMENT = False
 RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_42_19\1779439339"
 DISTANCE_FROM_PHYS_MEAS_POINT = 3.1711242130880257 #Measured in foxglove or inbetween 2 gps points,
 BOTTOM_LIMIT_KAPPA = 1e-6 # Minimum curvature to show on the plot (to have a better visualisation)
-# ── List the result files to load (filenames without .npz extension) ──────────
-VALIDATION_FILES = [
-    "RANSAC_patchwork_1779439339626",
-
+# ── Prefixes of the result files to load (filenames without .npz extension) ──
+VALIDATION_PREFIXES = [
+    "RANSAC_patchwork",
 ]
 
-CALCULATION_FILES = [
-   "height-deriv_csf_1779439339626",
-   "height-deriv_patchwork_1779439339626",
-   "PCA_csf_1779439339626",
-   "PCA_patchwork_1779439339626",
-   "RANSAC_csf_1779439339626",
-   "RANSAC_patchwork_1779439339626"
-
+CALCULATION_PREFIXES = [
+    "height-deriv_csf",
+    "height-deriv_patchwork",
+    "PCA_csf",
+    "PCA_patchwork",
+    "RANSAC_csf",
+    "RANSAC_patchwork",
 ]
 
 SMOOTHENING_FACTOR = 0  # Adjust as needed (0 = no smoothing, higher = more smoothing) # Keep it at 0 i think
 # ─────────────────────────────────────────────────────────────────────────────
+
+def _find_by_prefix(directory, prefixes):
+    matches = []
+    for fname in os.listdir(directory):
+        if fname.endswith(".npz") and any(fname.startswith(p) for p in prefixes):
+            matches.append(fname[:-4])
+    return matches
+
+VALIDATION_FILES   = _find_by_prefix(RESULTS_DIR, VALIDATION_PREFIXES)
+CALCULATION_FILES  = _find_by_prefix(RESULTS_DIR, CALCULATION_PREFIXES)
 
 results_validation = {} # Access variables by method name example: results_validation["AHN4 DTM"]["x"]
 try:
