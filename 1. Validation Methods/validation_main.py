@@ -210,7 +210,7 @@ for vm, vd in results_validation.items(): # Vm is validation method, vd is valid
         print(f"\n  [{vm}  vs  {cm}]")
         print(f"    RMSE:     {rmse:.4f} m")
         print(f"    MAE:      {mae:.4f} m")
-        print(f"    Max diff: {threshold_error:.4f} m")
+        print(f"    In threshold: {threshold_error:.4f} m")
 
 
 # ── CSV export ────────────────────────────────────────────────────────────────
@@ -220,7 +220,7 @@ csv_path = os.path.join(r"D:\Validation_results\Statistics", f"{t}.csv")
 with open(csv_path, "w", newline="") as f:
     writer = csv.writer(f)
     writer.writerow(["Cross comparison (validation vs calculation)"])
-    writer.writerow(["Val method", "Calc method", "RMSE (m)", "MAE (m)", "Max diff (m)"])
+    writer.writerow(["Val method", "Calc method", "RMSE (m)", "MAE (m)", "In threshold"])
     for vm, cm, _, __, rmse, mae, max_d in comparisons:
         writer.writerow([vm, cm, f"{rmse:.6f}", f"{mae:.6f}", f"{max_d:.6f}"])
 
