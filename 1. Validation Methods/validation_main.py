@@ -40,6 +40,19 @@ CALCULATION_PREFIXES = [
 ]
 
 SMOOTHENING_FACTOR = 0  # Adjust as needed (0 = no smoothing, higher = more smoothing) # Keep it at 0 i think
+
+# ── Alignment settings ───────────────────────────────────────────────────────
+ALIGN_TO_REFERENCE   = True
+REFERENCE_SUBSTR     = "Physical_meas"  # Align everything to where the physical measurement rises
+ALIGN_ABS_SLOPE      = 0.02   # m/m : minimum sustained rise rate (absolute pass)
+ALIGN_ABS_BASELINE   = 0.03   # m   : how far above baseline counts as "risen"
+ALIGN_SMOOTH_WIN_M   = 1.0    # m   : smoothing window for z before detection
+ALIGN_MIN_RISE_LEN_M = 1.0    # m   : rise must be sustained at least this long
+
+# ── Trim settings ────────────────────────────────────────────────────────────
+TRIM_AT_PHYS_PEAK   = True    # Right cutoff at the peak of the physical measurement
+PHYS_MEAS_SUBSTR    = "Physical_meas"
+TRIM_AT_SLOPE_START = True    # Left cutoff at the detected slope-start
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _find_by_prefix(directory, prefixes):
@@ -48,6 +61,164 @@ def _find_by_prefix(directory, prefixes):
         if fname.endswith(".npz") and any(fname.startswith(p) for p in prefixes):
             matches.append(fname[:-4])
     return matches
+
+
+# ── Elevation-start detection helpers ─────────────────────────────────────────
+def _smooth(z, window_samples):
+    z = np.asarray(z, float)
+    w = max(1, int(window_samples))
+    if w % 2 == 0:
+        w += 1
+    if w <= 1:
+        return z
+    pad = w // 2
+    zp = np.pad(z, pad, mode="edge")
+    return np.convolve(zp, np.ones(w) / w, mode="valid")[:len(z)]
+
+
+def detect_elevation_start(
+    s, z,
+    slope_threshold=0.02,
+    baseline_tol=0.03,
+    smooth_window_m=1.0,
+    min_rise_len_m=1.0,
+    baseline_frac=0.20,
+    baseline_pct=5.0,
+    grid_step_m=None,
+):
+    s = np.asarray(s, float)
+    z = np.asarray(z, float)
+    m = np.isfinite(s) & np.isfinite(z)
+    s, z = s[m], z[m]
+    if s.size < 4:
+        return None
+    order = np.argsort(s)
+    s, z = s[order], z[order]
+    s, idx = np.unique(s, return_index=True)
+    z = z[idx]
+    if s.size < 4:
+        return None
+    if grid_step_m is None:
+        grid_step_m = float(np.median(np.diff(s)))
+    if not np.isfinite(grid_step_m) or grid_step_m <= 0:
+        return None
+    sg = np.arange(s[0], s[-1], grid_step_m)
+    if sg.size < 4:
+        return None
+    zg = np.interp(sg, s, z)
+    zs = _smooth(zg, round(smooth_window_m / grid_step_m))
+    n_base = max(3, int(baseline_frac * zs.size))
+    baseline = np.percentile(zs[:n_base], baseline_pct)
+    win = max(1, int(round(min_rise_len_m / grid_step_m)))
+    win_len_m = win * grid_step_m
+    need_rise = slope_threshold * win_len_m
+    for i in range(0, zs.size - win):
+        rise = zs[i + win] - zs[i]
+        if rise >= need_rise and zs[i + win] >= baseline + baseline_tol:
+            j0 = max(0, i - win)
+            cross = np.argmax(zs[j0:i + win + 1] >= baseline + baseline_tol)
+            return float(sg[j0 + cross])
+    return None
+
+
+def detect_elevation_start_adaptive(
+    s, z,
+    abs_slope=0.02, abs_baseline_tol=0.03,
+    char_len_m=10.0, rel_height_frac=0.05,
+    **kwargs,
+):
+    start = detect_elevation_start(
+        s, z, slope_threshold=abs_slope, baseline_tol=abs_baseline_tol, **kwargs
+    )
+    if start is not None:
+        return start, "absolute"
+    z = np.asarray(z, float)
+    z = z[np.isfinite(z)]
+    if z.size < 4:
+        return None, "failed"
+    z_range = np.percentile(z, 95) - np.percentile(z, 5)
+    if not np.isfinite(z_range) or z_range <= 0:
+        return None, "failed"
+    rel_baseline_tol = max(1e-6, rel_height_frac * z_range)
+    rel_slope = max(1e-6, (rel_height_frac * z_range) / char_len_m)
+    start = detect_elevation_start(
+        s, z, slope_threshold=rel_slope, baseline_tol=rel_baseline_tol, **kwargs
+    )
+    if start is not None:
+        return start, f"relative (z_range={z_range:.3f} m)"
+    return None, "failed"
+
+
+def align_profiles_to_reference(store_list, reference_substr, smoothing_factor=0.0, **detect_kwargs):
+    ref_start = None
+    for label, store in store_list:
+        for method, d in store.items():
+            if reference_substr in method:
+                rs, mode = detect_elevation_start_adaptive(d["s"], d["z"], **detect_kwargs)
+                if rs is not None:
+                    ref_start = rs
+                    print(f"Reference [{label} – {method}] start s={rs:.3f} m ({mode})")
+                else:
+                    print(f"WARNING: reference [{label} – {method}] start NOT detected.")
+                break
+    if ref_start is None:
+        print("WARNING: no reference start -> no alignment applied.")
+        return None
+    for label, store in store_list:
+        for method, d in store.items():
+            start, mode = detect_elevation_start_adaptive(d["s"], d["z"], **detect_kwargs)
+            if start is None:
+                print(f"WARNING [{label} – {method}]: start not detected -> left unshifted.")
+                continue
+            shift = ref_start - start
+            s_new = d["s"] + shift
+            d["s"] = s_new
+            d["spline_z"] = sc.make_splrep(s_new, d["z"], s=smoothing_factor)
+            d["spline_kappa"] = sc.make_splrep(s_new, d["kappa"], s=smoothing_factor)
+            print(f"  [{label} – {method}]: start s={start:.3f} -> shift {shift:+.3f} m ({mode})")
+    return ref_start
+
+
+def find_profile_peak_s(store, method_substr):
+    for method, d in store.items():
+        if method_substr in method:
+            z = np.asarray(d["z"], float)
+            s = np.asarray(d["s"], float)
+            if z.size == 0 or s.size != z.size or not np.any(np.isfinite(z)):
+                print(f"WARNING: peak profile '{method}' has no usable z/s.")
+                return None
+            idx = int(np.nanargmax(z))
+            return float(s[idx])
+    print(f"WARNING: no profile matching '{method_substr}' found for peak.")
+    return None
+
+
+def trim_profiles_to_cutoff(store_list, s_cutoff=None, s_min=None, smoothing_factor=0.0):
+    lo_txt = f"{s_min:.3f}" if s_min is not None else "-inf"
+    hi_txt = f"{s_cutoff:.3f}" if s_cutoff is not None else "+inf"
+    for label, store in store_list:
+        for method, d in store.items():
+            s = np.asarray(d["s"], float)
+            mask = np.ones(s.size, dtype=bool)
+            if s_min is not None:
+                mask &= s >= s_min
+            if s_cutoff is not None:
+                mask &= s <= s_cutoff
+            n_keep = int(np.count_nonzero(mask))
+            if n_keep == s.size:
+                continue
+            if n_keep < 4:
+                print(f"WARNING [{label} – {method}]: only {n_keep} points in "
+                      f"[{lo_txt}, {hi_txt}] m -> left untrimmed.")
+                continue
+            for key in ("x", "y", "z", "s", "t", "kappa"):
+                arr = d.get(key)
+                if arr is not None and np.ndim(arr) > 0 and np.size(arr) == mask.size:
+                    d[key] = np.asarray(arr)[mask]
+            d["spline_z"]     = sc.make_splrep(d["s"], d["z"], s=smoothing_factor)
+            d["spline_kappa"] = sc.make_splrep(d["s"], d["kappa"], s=smoothing_factor)
+            print(f"  [{label} – {method}]: trimmed to s in [{lo_txt}, {hi_txt}] m "
+                  f"({s.size} -> {n_keep} points)")
 
 VALIDATION_FILES   = _find_by_prefix(RESULTS_DIR, VALIDATION_PREFIXES)
 CALCULATION_FILES  = _find_by_prefix(RESULTS_DIR, CALCULATION_PREFIXES)
@@ -191,6 +362,40 @@ if PHYSICAL_MEASUREMENT:
     results_validation[phys_key]["spline_z"]     = sp_z
     results_validation[phys_key]["spline_kappa"] = sp_k
     results_validation[phys_key]["kappa"]        = kappa
+
+# ── Align all profiles to the physical measurement elevation-start ────────────
+s_start_cutoff = None
+if ALIGN_TO_REFERENCE:
+    print("\n── Aligning profiles to reference elevation-start ───────────────────")
+    s_start_cutoff = align_profiles_to_reference(
+        [("VALIDATION", results_validation), ("CALCULATION", results_calculation)],
+        reference_substr=REFERENCE_SUBSTR,
+        smoothing_factor=SMOOTHENING_FACTOR,
+        abs_slope=ALIGN_ABS_SLOPE,
+        abs_baseline_tol=ALIGN_ABS_BASELINE,
+        smooth_window_m=ALIGN_SMOOTH_WIN_M,
+        min_rise_len_m=ALIGN_MIN_RISE_LEN_M,
+    )
+
+# ── Trim all profiles to [slope-start, physical measurement peak] ─────────────
+if TRIM_AT_PHYS_PEAK or TRIM_AT_SLOPE_START:
+    print("\n── Trimming profiles (slope-start / physical peak) ──────────────────")
+    s_cutoff = find_profile_peak_s(results_validation, PHYS_MEAS_SUBSTR) if TRIM_AT_PHYS_PEAK else None
+    if TRIM_AT_PHYS_PEAK and s_cutoff is None:
+        print("WARNING: physical-measurement peak not found -> no right cutoff applied.")
+    s_left = s_start_cutoff if TRIM_AT_SLOPE_START else None
+    if TRIM_AT_SLOPE_START and s_left is None:
+        print("WARNING: slope-start not available (alignment off/failed) -> no left cutoff applied.")
+    if s_cutoff is not None or s_left is not None:
+        lo = f"{s_left:.3f}" if s_left is not None else "-inf"
+        hi = f"{s_cutoff:.3f}" if s_cutoff is not None else "+inf"
+        print(f"Global window: s in [{lo}, {hi}] m.")
+        trim_profiles_to_cutoff(
+            [("VALIDATION", results_validation), ("CALCULATION", results_calculation)],
+            s_cutoff=s_cutoff,
+            s_min=s_left,
+            smoothing_factor=SMOOTHENING_FACTOR,
+        )
 
 # ── Cross comparison (validation vs calculation, different methods only) ──────
 comparisons = []
