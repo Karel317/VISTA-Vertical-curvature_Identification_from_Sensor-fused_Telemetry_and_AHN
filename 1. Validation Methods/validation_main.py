@@ -338,6 +338,7 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
             print(f"    MAE   (spline vs raw z): {mae:.6f} m")
             print(f"    Max Δ (spline vs raw z): {max_diff:.6f} m")
 print("No issues")
+ """""
 if PHYSICAL_MEASUREMENT:
     phys_key = next(k for k in results_validation if "Physical_meas" in k)
     dist_grid = np.arange(-5.0, 20.0, 0.222) # 0.222m is the distance between physical measurement points
@@ -362,7 +363,7 @@ if PHYSICAL_MEASUREMENT:
     results_validation[phys_key]["spline_z"]     = sp_z
     results_validation[phys_key]["spline_kappa"] = sp_k
     results_validation[phys_key]["kappa"]        = kappa
-
+"""
 # ── Align all profiles to the physical measurement elevation-start ────────────
 s_start_cutoff = None
 if ALIGN_TO_REFERENCE:
