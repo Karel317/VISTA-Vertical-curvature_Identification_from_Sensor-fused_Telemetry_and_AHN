@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 PHYSICAL_MEASUREMENT = False
 THRESHOLD = 0.1
-RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_51_57\1779439917"
+RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_53_17\1779439997"
 DISTANCE_FROM_PHYS_MEAS_POINT = 3.1711242130880257 #Measured in foxglove or inbetween 2 gps points,
 BOTTOM_LIMIT_KAPPA = 1e-6 # Minimum curvature to show on the plot (to have a better visualisation)
 # ── Prefixes of the result files to load (filenames without .npz extension) ──
@@ -150,7 +150,7 @@ def detect_elevation_start_adaptive(
 
 
 def align_profiles_to_reference(store_list, reference_substr, smoothing_factor=0.0, **detect_kwargs):
-    ref_start = None
+    ref_start = 20 
     for label, store in store_list:
         for method, d in store.items():
             if reference_substr in method:
@@ -299,8 +299,10 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
 
         if len(z) != len(s):
             print(f"---------------------------------------------------------------------------------------")
-            print(f"Error [{label} – {method}]: z has {len(z)} points but s has {len(s)} points. FIX THIS")
+            print(f"Error [{label} – {method}]: z has {len(z)} points but s has {len(s)} points. Truncating to min length.")
             print(f"---------------------------------------------------------------------------------------")
+            min_len = min(len(z), len(s))
+            z, s = z[:min_len], s[:min_len]
            
 
 
@@ -338,7 +340,7 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
             print(f"    MAE   (spline vs raw z): {mae:.6f} m")
             print(f"    Max Δ (spline vs raw z): {max_diff:.6f} m")
 print("No issues")
- """""
+"""""
 if PHYSICAL_MEASUREMENT:
     phys_key = next(k for k in results_validation if "Physical_meas" in k)
     dist_grid = np.arange(-5.0, 20.0, 0.222) # 0.222m is the distance between physical measurement points
