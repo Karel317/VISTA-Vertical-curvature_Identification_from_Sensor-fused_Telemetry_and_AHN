@@ -786,6 +786,19 @@ def run(imu_input, gps_file, timestamp, gps_topic, plot, output_location):
     _read_gps(gps_file, data, timestamp, gps_topic)
     _fuse_speed(data)
     _elevation_profile(data, timestamp)
+    s_win = data["s_win"]
+    z_win = data["z_win"]
+    pitch_win = data["pitch_win"]
+    pitch_rad_win = data["pitch_rad_win"]
+    _, unique_idx = np.unique(s_win, return_index=True)
+    s_win         = s_win[unique_idx]
+    z_win         = z_win[unique_idx]
+    pitch_win     = pitch_win[unique_idx]
+    pitch_rad_win = pitch_rad_win[unique_idx]
+    data["s_win"] = s_win
+    data["z_win"] = z_win
+    data["pitch_win"] = pitch_win
+    data["pitch_rad_win"] = pitch_rad_win
     _terrain_curvature(data)
     _path_curvature(data)
     _positional_tracking_profile(data, timestamp)
