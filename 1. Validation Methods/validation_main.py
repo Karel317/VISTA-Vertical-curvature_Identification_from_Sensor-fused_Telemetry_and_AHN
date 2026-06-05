@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
     # This can be done in 2 ways, fully letting it change a lot or implementing a max moveable distance based on gps resolution.
 
 PHYSICAL_MEASUREMENT = False
-
+THRESHOLD = 0.1
 RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_51_57\1779439917"
 DISTANCE_FROM_PHYS_MEAS_POINT = 3.1711242130880257 #Measured in foxglove or inbetween 2 gps points,
 BOTTOM_LIMIT_KAPPA = 1e-6 # Minimum curvature to show on the plot (to have a better visualisation)
@@ -204,12 +204,13 @@ for vm, vd in results_validation.items(): # Vm is validation method, vd is valid
         diff   = z_v - z_c
         rmse   = np.sqrt(np.mean(diff ** 2))
         mae    = np.mean(np.abs(diff))
-        max_d  = np.max(np.abs(diff))
-        comparisons.append((vm, cm, s_row, diff, rmse, mae, max_d))
+        threshold_error = np.mean(np.abs(diff) < THRESHOLD)
+
+        comparisons.append((vm, cm, s_row, diff, rmse, mae, threshold_error))
         print(f"\n  [{vm}  vs  {cm}]")
         print(f"    RMSE:     {rmse:.4f} m")
         print(f"    MAE:      {mae:.4f} m")
-        print(f"    Max diff: {max_d:.4f} m")
+        print(f"    Max diff: {threshold_error:.4f} m")
 
 
 # ── CSV export ────────────────────────────────────────────────────────────────
