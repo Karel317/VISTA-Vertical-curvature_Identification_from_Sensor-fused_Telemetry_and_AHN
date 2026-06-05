@@ -16,16 +16,21 @@ import matplotlib.pyplot as plt
     # This can be done in 2 ways, fully letting it change a lot or implementing a max moveable distance based on gps resolution.
 
 PHYSICAL_MEASUREMENT = False
-
-RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_42_19\1779439339"
+THRESHOLD = 0.1
+RESULTS_DIR = r"D:\Validation_results\2026_05_22\10_51_57\1779439917"
 DISTANCE_FROM_PHYS_MEAS_POINT = 3.1711242130880257 #Measured in foxglove or inbetween 2 gps points,
 BOTTOM_LIMIT_KAPPA = 1e-6 # Minimum curvature to show on the plot (to have a better visualisation)
 # ── Prefixes of the result files to load (filenames without .npz extension) ──
 VALIDATION_PREFIXES = [
-    "RANSAC_patchwork",
+    "Physical_meas_Station_Brug",
 ]
 
 CALCULATION_PREFIXES = [
+    "AHN5_DSM",
+    "AHN5_DTM",
+    "EKF_curvature_validation",
+    "KISS_ICP",
+    "Z_positional_tracking",
     "height-deriv_csf",
     "height-deriv_patchwork",
     "PCA_csf",
@@ -54,15 +59,17 @@ try:
         data = np.load(fpath, allow_pickle=True)
 
         method = str(data["method"].flat[0])
+        kappa_variants = [k for k in data.files if k.startswith("kappa")]
+        kappa_key = "kappa" if "kappa" in data.files else (kappa_variants[0] if kappa_variants else None)
         core = {
             "x":     data["x"] if "x" in data.files else None,
             "y":     data["y"]if "y" in data.files else None,
             "z":     data["z"] if "z" in data.files else None,
             "s":     data["s"] if "s" in data.files else None,
             "t":     data["t"] if "t" in data.files else None,
-            "kappa": data["kappa"] if "kappa" in data.files else None,
+            "kappa": data[kappa_key] if kappa_key else None,
         }
-        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t","kappa", "method")]
+        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "kappa", "method") and k != kappa_key]
         extras = {k: data[k] for k in extra_keys}
 
         results_validation[method] = {**core, **extras}
@@ -77,15 +84,17 @@ try:
         data = np.load(fpath, allow_pickle=True)
 
         method = str(data["method"].flat[0])
+        kappa_variants = [k for k in data.files if k.startswith("kappa")]
+        kappa_key = "kappa" if "kappa" in data.files else (kappa_variants[0] if kappa_variants else None)
         core = {
             "x":     data["x"] if "x" in data.files else None,
             "y":     data["y"] if "y" in data.files else None,
             "z":     data["z"] if "z" in data.files else None,
             "s":     data["s"] if "s" in data.files else None,
             "t":     data["t"] if "t" in data.files else None,
-            "kappa": data["kappa"] if "kappa" in data.files else None,
+            "kappa": data[kappa_key] if kappa_key else None,
         }
-        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "kappa", "method")]
+        extra_keys = [k for k in data.files if k not in ("x", "y", "z", "s", "t", "kappa", "method") and k != kappa_key]
         extras = {k: data[k] for k in extra_keys}
 
         results_calculation[method] = {**core, **extras}
@@ -169,7 +178,7 @@ if PHYSICAL_MEASUREMENT:
         # Logic here is we are DISTANCE_FROM_PHYS_MEAS_POINT away from the first physical measurement point so we assign z as 0
         # Untill this distance is reached, then we take the points of the physical measurement up until 20m.
         if d >= DISTANCE_FROM_PHYS_MEAS_POINT and phys_idx < len(results_validation[phys_key]["z"]):
-            z[i] = results_validation[phys_key]["z"][phys_idx] / 100 # cm to m
+            z[i] = results_validation[phys_key]["z"][phys_idx] # already in meters
             phys_idx += 1
 
     sp_z = sc.make_splrep(dist_grid, z, s=SMOOTHENING_FACTOR)
@@ -195,12 +204,13 @@ for vm, vd in results_validation.items(): # Vm is validation method, vd is valid
         diff   = z_v - z_c
         rmse   = np.sqrt(np.mean(diff ** 2))
         mae    = np.mean(np.abs(diff))
-        max_d  = np.max(np.abs(diff))
-        comparisons.append((vm, cm, s_row, diff, rmse, mae, max_d))
+        threshold_error = np.mean(np.abs(diff) < THRESHOLD)
+
+        comparisons.append((vm, cm, s_row, diff, rmse, mae, threshold_error))
         print(f"\n  [{vm}  vs  {cm}]")
         print(f"    RMSE:     {rmse:.4f} m")
         print(f"    MAE:      {mae:.4f} m")
-        print(f"    Max diff: {max_d:.4f} m")
+        print(f"    In threshold: {threshold_error:.4f} m")
 
 
 # ── CSV export ────────────────────────────────────────────────────────────────
@@ -210,7 +220,7 @@ csv_path = os.path.join(r"D:\Validation_results\Statistics", f"{t}.csv")
 with open(csv_path, "w", newline="") as f:
     writer = csv.writer(f)
     writer.writerow(["Cross comparison (validation vs calculation)"])
-    writer.writerow(["Val method", "Calc method", "RMSE (m)", "MAE (m)", "Max diff (m)"])
+    writer.writerow(["Val method", "Calc method", "RMSE (m)", "MAE (m)", "In threshold"])
     for vm, cm, _, __, rmse, mae, max_d in comparisons:
         writer.writerow([vm, cm, f"{rmse:.6f}", f"{mae:.6f}", f"{max_d:.6f}"])
 
