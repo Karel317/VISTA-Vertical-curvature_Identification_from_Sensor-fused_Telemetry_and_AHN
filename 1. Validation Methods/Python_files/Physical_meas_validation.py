@@ -7,12 +7,15 @@ import matplotlib.pyplot as plt
 # ============================================================
 # SETTINGS — edit these before running
 # ============================================================
+# TODO Delete timestamp
 
-OUTPUT_PATH = r"D:\Validation_results"        # where the .npz profiles are saved
+
+OUTPUT_PATH = r"D:\Validation_results"         # File path where the .npz profiles get saved to
 
 # The CSV lives in the parent "1. Validation Methods" folder; this file is in Python_files/
 DEFAULT_CSV_FILE = Path(__file__).parent.parent / "Physical_meas_data.csv"
 
+BACKWARDS = True                              # If we biked backwards on the same slope we need to look at the slope the other way
 TIME          = 1779439914.817100912           # reference Unix timestamp (sets the output folder)
 STEP_M        = 0.222                          # m between consecutive measurement points
 METHOD_PREFIX = "Physical_meas"                # validation_main detects via "Physical_meas" in key
@@ -32,7 +35,7 @@ def _slugify(label):
     return f"{METHOD_PREFIX}_" + "_".join(label.split())
 
 
-def _build_profiles(labels, data):
+def _build_profiles(labels, data, backward):
     """Build one profile per bridge column.
 
     Ports Physical_meas.py per-column math: subtract first reading, drop NaNs,
@@ -44,6 +47,8 @@ def _build_profiles(labels, data):
         col = col[~np.isnan(col)]
         z_cm = -np.cumsum(col)
         z_m  = z_cm / 100.0                     # cm → m
+        if backward:                           # biked backwards: reverse so end z becomes first, first z becomes last
+            z_m = z_m[::-1]
         s    = np.arange(len(z_m)) * STEP_M
         profiles[_slugify(labels[i])] = {"s": s, "z": z_m}
     return profiles
@@ -61,7 +66,7 @@ def _save_output(timestamp, profiles):
 
     paths = []
     for method, p in profiles.items():
-        fpath = os.path.join(save_dir, f"{method}_{int(timestamp)}.npz")
+        fpath = os.path.join(save_dir, f"{method}_backwards_{int(timestamp)}.npz")
         np.savez_compressed(
             fpath,
             x      = np.array([]),
@@ -92,7 +97,7 @@ def _plot(profiles):
 
 # ── Main functions ─────────────────────────────────────────────────────────
 
-def run(input_file, timestamp, plot=False, output_path=OUTPUT_PATH):
+def run(input_file, timestamp, backward, plot=False, output_path=OUTPUT_PATH):
     global OUTPUT_PATH
     OUTPUT_PATH = output_path
     timestamp = float(timestamp)
@@ -104,10 +109,11 @@ def run(input_file, timestamp, plot=False, output_path=OUTPUT_PATH):
     if candidate is not None and candidate.suffix.lower() == ".csv" and candidate.exists():
         csv_path = candidate
     else:
+        print("INput file not found, using default file")
         csv_path = DEFAULT_CSV_FILE
 
     labels, data = _read_csv(csv_path)
-    profiles = _build_profiles(labels, data)
+    profiles = _build_profiles(labels, data, backward)
     paths = _save_output(timestamp, profiles)
     if plot:
         _plot(profiles)
@@ -130,5 +136,6 @@ if __name__ == "__main__":
                         help="Reference Unix timestamp; sets the output folder (default: %(default)s)")
     parser.add_argument("--plot", type=_str2bool, nargs="?", const=True, default=False,
                         help="Set true for plots (default: %(default)s)")
+    parser.add_argument("--backwards", default=BACKWARDS)
     args = parser.parse_args()
-    run(args.input_file, args.timestamp, args.plot, output_path=args.output_location)
+    run(args.input_file, args.timestamp,args.backwards, args.plot,  output_path=args.output_location)

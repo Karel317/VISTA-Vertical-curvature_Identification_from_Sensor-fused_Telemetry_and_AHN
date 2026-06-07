@@ -644,17 +644,6 @@ def _path_curvature(data):
     return data
 
 
-def _positional_tracking_profile(data, timestamp):
-    """Elevation straight from the ZED pose z, on the same window as the pitch profile."""
-    pose_data = data["pose_data"]
-    pose_z    = np.array(pose_data["z"])
-    mask      = data["mask"]
-    ref_idx   = data["ref_idx"]
-
-    z_pos_win = pose_z[mask] - pose_z[ref_idx]
-    data["z_pos_win"] = z_pos_win
-    return data
-
 
 def _plot(data):
     v_zed_t = data["v_zed_t"]; v_zed_raw = data["v_zed_raw"]
@@ -790,18 +779,20 @@ def run(imu_input, gps_file, timestamp, gps_topic, plot, output_location):
     z_win = data["z_win"]
     pitch_win = data["pitch_win"]
     pitch_rad_win = data["pitch_rad_win"]
+    pose_z = np.array(data["pose_data"]["z"])
+    z_pos_win_full = pose_z[data["mask"]] - pose_z[data["ref_idx"]]
     _, unique_idx = np.unique(s_win, return_index=True)
     s_win         = s_win[unique_idx]
     z_win         = z_win[unique_idx]
     pitch_win     = pitch_win[unique_idx]
     pitch_rad_win = pitch_rad_win[unique_idx]
-    data["s_win"] = s_win
-    data["z_win"] = z_win
+    data["s_win"]     = s_win
+    data["z_win"]     = z_win
     data["pitch_win"] = pitch_win
     data["pitch_rad_win"] = pitch_rad_win
+    data["z_pos_win"] = z_pos_win_full[unique_idx]
     _terrain_curvature(data)
     _path_curvature(data)
-    _positional_tracking_profile(data, timestamp)
     _save_output(gps_file, data, timestamp, output_location)
     if plot:
         _plot(data)
