@@ -106,8 +106,6 @@ Supervisor: Dr. H. Caesar
 **Delete KISS ICP Results eventually**
 
 **Make sure all seperate files are explained (usage/how it works)**
-
-  Validation methods README
   
   Filtering methods README
   
