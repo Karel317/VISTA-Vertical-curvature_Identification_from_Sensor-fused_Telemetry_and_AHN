@@ -99,3 +99,12 @@ Supervisor: Dr. H. Caesar
 
 ---
 
+
+
+# To do's for GitHub Cleanup
+
+Delete all unnessecary files
+Make sure all seperate files are explained (usage/how it works)
+Update this Overview README to explain the structure and purpose of the repository coherently
+Update the requirements file
+
