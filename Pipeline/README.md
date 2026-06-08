@@ -35,7 +35,7 @@ Up to eight `.npz` files per timestamp in `RESULTS_DIR/<date>/<time>/<timestamp>
 
 ## Non-LiDAR-based Calculation Pipeline.py
 
-This script orchestrates the three non-LiDAR validation methods: AHN5, IMU/GPS (EKF), and KISS-ICP. It imports each module lazily and calls its `run()` function with a shared configuration block. Modules can be toggled on or off via the `REGISTRY` dict or overridden at runtime with command-line flags. A summary is printed at the end listing which modules succeeded or failed.
+This script orchestrates the three non-LiDAR validation methods: AHN5, IMU/GPS (EKF), and KISS-ICP. It imports each module and calls its `run()` function with a shared configuration block. Modules can be toggled on or off via the `REGISTRY` dict or overridden at runtime with command-line flags. A summary is printed at the end listing which modules succeeded or failed.
 
 **Input** \
 `MAIN_MCAP` — path to the main `.mcap` recording (used by AHN5 and KISS-ICP) \
