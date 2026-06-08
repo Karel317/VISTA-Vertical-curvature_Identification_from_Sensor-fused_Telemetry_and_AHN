@@ -9,25 +9,25 @@ import matplotlib.pyplot as plt
 # ── Files ─────────────────────────────────────────────────────────────────────
 # Physical-measurement results may be in a different timestamp folder than the
 # LiDAR/calculation results (they are run separately and saved under their own timestamp).
-VALIDATION_DIR   = r"D:\Validation_results"   # physical meas .npz files
-CALCULATION_DIR  = r"D:\Validation_results\2026_05_22\10_52_58\1779439978"   # lidar/calculation .npz files
+VALIDATION_DIR   = r"C:\Users\karel\OneDrive\BEP\11_04_21\11_04_21\1779440661"   # physical meas .npz files
+CALCULATION_DIR  = r"C:\Users\karel\OneDrive\BEP\11_04_21\11_04_21\1779440661"   # lidar/calculation .npz files
 
 # Prefixes of the result files to load (filenames without the .npz extension).
 VALIDATION_PREFIXES = [
-    #"Physical_meas_Station_Brug",
-    "Physical_meas_Station_Brug_backwards",
+    "Physical_meas_Sint_Jorispad_Brug",
+    #"Physical_meas_Sint_Jorispad_Brug_backwards",
 ]
 CALCULATION_PREFIXES = [
     "AHN5_DSM",
     "AHN5_DTM",
-    "EKF_curvature_validation",
-    "KISS_ICP",
-    "Z_positional_tracking",
-    "height-deriv_csf",
-    "height-deriv_patchwork",
-    "PCA_csf",
-    "PCA_patchwork",
-    "RANSAC_csf",
+    #"EKF_curvature_validation",
+    #"KISS_ICP",
+    #"Z_positional_tracking",
+    #"height-deriv_csf",
+    #"height-deriv_patchwork",
+    #"PCA_csf",
+    #"PCA_patchwork",
+    #"RANSAC_csf",
     "RANSAC_patchwork",
 ]
 
@@ -360,7 +360,7 @@ for vm, vd in results_validation.items():       # vm: validation method, vd: val
 # ── CSV export ────────────────────────────────────────────────────────────────
 raw_t    = results_calculation[next(iter(results_calculation))]["t"]
 t        = str(raw_t.flat[0]) if hasattr(raw_t, "flat") else str(raw_t)
-csv_path = os.path.join(r"D:\Validation_results\Statistics", f"{t}.csv")
+csv_path = os.path.join(r"C:\Users\karel\OneDrive\BEP\11_02_12", f"{t}.csv")
 with open(csv_path, "w", newline="") as f:
     writer = csv.writer(f)
     writer.writerow(["Cross comparison (validation vs calculation)"])
