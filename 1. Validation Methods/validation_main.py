@@ -20,14 +20,14 @@ VALIDATION_PREFIXES = [
 CALCULATION_PREFIXES = [
     "AHN5_DSM",
     "AHN5_DTM",
-    #"EKF_curvature_validation",
-    #"KISS_ICP",
-    #"Z_positional_tracking",
-    #"height-deriv_csf",
-    #"height-deriv_patchwork",
-    #"PCA_csf",
-    #"PCA_patchwork",
-    #"RANSAC_csf",
+    "EKF_curvature_validation",
+    "KISS_ICP",
+    "Z_positional_tracking",
+    "height-deriv_csf",
+    "height-deriv_patchwork",
+    "PCA_csf",
+    "PCA_patchwork",
+    "RANSAC_csf",
     "RANSAC_patchwork",
 ]
 
