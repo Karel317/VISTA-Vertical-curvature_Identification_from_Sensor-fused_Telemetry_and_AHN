@@ -1,7 +1,0 @@
------------------ Results for McapDataloader Sequence kuitbrug_2026_05_22_10_50_00 -----------------
-+-------------------+-------+-------+
-|            Metric | Value | Units |
-+===================+=======+=======+
-| Average Frequency |  11   | Hz    |
-|   Average Runtime |  87   | ms    |
-+-------------------+-------+-------+
