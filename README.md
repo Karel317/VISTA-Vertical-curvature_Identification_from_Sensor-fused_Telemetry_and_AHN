@@ -103,7 +103,7 @@ Supervisor: Dr. H. Caesar
 
 # To do's for GitHub Cleanup
 
-**Delete all unnessecary files**
+**Delete KISS ICP Results eventually**
 
 **Make sure all seperate files are explained (usage/how it works)**
 
@@ -119,8 +119,6 @@ Supervisor: Dr. H. Caesar
 
   
 **Update this Overview README to explain the structure and purpose of the repository coherently**
-
-**Update Requirements file**                                                                                                       (DONE)
 
 **Don't forget to talk about installing ZED-SDK and CUDA!**
 
