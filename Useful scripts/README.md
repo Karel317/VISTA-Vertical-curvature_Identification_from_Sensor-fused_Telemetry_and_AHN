@@ -1,4 +1,4 @@
-# File context and how to use them
+# Directory Context
 Every file's context and usage will be explained briefly.
 
 ---
