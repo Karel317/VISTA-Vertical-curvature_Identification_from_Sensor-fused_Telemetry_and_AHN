@@ -107,6 +107,7 @@ Delete all unnessecary files
 Make sure all seperate files are explained (usage/how it works)
 Update this Overview README to explain the structure and purpose of the repository coherently
 Update the requirements file
+Don't forget to talk about installing ZED-SDK and CUDA!
 
 
 OPTIONAL:
