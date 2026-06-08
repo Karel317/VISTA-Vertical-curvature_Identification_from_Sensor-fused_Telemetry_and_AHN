@@ -1,7 +1,0 @@
---------------------------- Results for McapDataloader Sequence rosbag_0 ---------------------------
-+-------------------+-------+-------+
-|            Metric | Value | Units |
-+===================+=======+=======+
-| Average Frequency |   5   | Hz    |
-|   Average Runtime |  182  | ms    |
-+-------------------+-------+-------+

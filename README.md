@@ -103,13 +103,27 @@ Supervisor: Dr. H. Caesar
 
 # To do's for GitHub Cleanup
 
-Delete all unnessecary files
-Make sure all seperate files are explained (usage/how it works)
-Update this Overview README to explain the structure and purpose of the repository coherently
-Update the requirements file
-Don't forget to talk about installing ZED-SDK and CUDA!
+**Delete KISS ICP Results eventually**
+
+**Make sure all seperate files are explained (usage/how it works)**
+
+  Validation methods README
+  
+  Filtering methods README
+  
+  Curvature Calculation README
+  
+  Useful scripts README
+
+  pipeline README
+
+  
+**Update this Overview README to explain the structure and purpose of the repository coherently**
+
+**Don't forget to talk about installing ZED-SDK and CUDA!**
 
 
-OPTIONAL:
+
+OPTIONAL: —
 Add a Readme for Discussion topics (what can be improved/automised)
 
