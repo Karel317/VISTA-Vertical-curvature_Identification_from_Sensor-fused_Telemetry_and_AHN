@@ -103,15 +103,25 @@ Supervisor: Dr. H. Caesar
 
 # To do's for GitHub Cleanup
 
-Delete all unnessecary files —
-Make sure all seperate files are explained (usage/how it works) —
-  Validation methods README —
-  Filtering methods README —
-  Curvature Calculation README —
-  Useful scripts README —
-Update this Overview README to explain the structure and purpose of the repository coherently —
-Update Requirements file                                                                                                       (DONE) —
-Don't forget to talk about installing ZED-SDK and CUDA! —
+Delete all unnessecary files
+
+Make sure all seperate files are explained (usage/how it works)
+
+  Validation methods README
+  
+  Filtering methods README
+  
+  Curvature Calculation README
+  
+  Useful scripts README
+
+  
+Update this Overview README to explain the structure and purpose of the repository coherently
+
+Update Requirements file                                                                                                       (DONE)
+
+Don't forget to talk about installing ZED-SDK and CUDA!
+
 
 
 OPTIONAL: —
