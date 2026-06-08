@@ -123,7 +123,3 @@ Supervisor: Dr. H. Caesar
 **Don't forget to talk about installing ZED-SDK and CUDA!**
 
 
-
-OPTIONAL: —
-Add a Readme for Discussion topics (what can be improved/automised)
-
