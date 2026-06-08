@@ -108,3 +108,7 @@ Make sure all seperate files are explained (usage/how it works)
 Update this Overview README to explain the structure and purpose of the repository coherently
 Update the requirements file
 
+
+OPTIONAL:
+Add a Readme for Discussion topics (what can be improved/automised)
+
