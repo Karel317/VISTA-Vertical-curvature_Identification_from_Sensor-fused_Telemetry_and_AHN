@@ -5,7 +5,7 @@ Every file's context and usage will be explained briefly.
 
 ## Physical_meas.py
 
-This script reads height-increment measurements collected physically along a route (for example using a measuring wheel or ruler at fixed intervals) from a CSV file. It computes a cumulative height profile for each measurement column, plots the elevation curves over distance, and saves the result as a compressed `.npz` file in the standardised format used by `Validation_main.py` for cross-comparison with the calculated profiles.
+This script reads height-increment measurements, collected physically along a route, from a CSV file. It computes a cumulative height profile for each measurement column, plots the elevation curves over distance, and saves the result as a compressed `.npz` file in the standardised format used by `Validation_main.py` for cross-comparison with the calculated profiles.
 
 **Input** \
 A `.csv` file named `Physical_meas_data.csv` placed in the same folder as the script. Each column contains height increments in centimetres and the first row contains the column headers used as plot labels.
