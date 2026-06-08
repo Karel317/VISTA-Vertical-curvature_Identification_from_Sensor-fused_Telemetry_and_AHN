@@ -73,7 +73,7 @@ Now run the desired files via VSCode.
 
 ## 📊 Results
 The Validation Methods folder involves scripts that use the AHN Height map and several sensors in order to provide a method to validate the vertical curvature calculation on the 3D pointclouds. Example output:
-![IMU Data](Picture/IMU_data.jpeg)
+![IMU Data]([Picture/IMU_data.jpeg](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/IMU_data.jpeg))
 
 The Filtering Methods folder involves scripts that apply filtering methods to identify groundpoints on curved terrain accurately. Example output:
 ![Patchwork++ Pointcloud filter](Pictures/Filtering_readme.png)
