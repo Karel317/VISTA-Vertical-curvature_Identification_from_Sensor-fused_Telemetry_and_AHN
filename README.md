@@ -103,9 +103,9 @@ Supervisor: Dr. H. Caesar
 
 # To do's for GitHub Cleanup
 
-Delete all unnessecary files
+**Delete all unnessecary files**
 
-Make sure all seperate files are explained (usage/how it works)
+**Make sure all seperate files are explained (usage/how it works)**
 
   Validation methods README
   
@@ -116,11 +116,11 @@ Make sure all seperate files are explained (usage/how it works)
   Useful scripts README
 
   
-Update this Overview README to explain the structure and purpose of the repository coherently
+**Update this Overview README to explain the structure and purpose of the repository coherently**
 
-Update Requirements file                                                                                                       (DONE)
+**Update Requirements file**                                                                                                       (DONE)
 
-Don't forget to talk about installing ZED-SDK and CUDA!
+**Don't forget to talk about installing ZED-SDK and CUDA!**
 
 
 
