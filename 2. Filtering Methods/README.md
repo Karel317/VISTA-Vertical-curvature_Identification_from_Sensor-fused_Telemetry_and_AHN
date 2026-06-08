@@ -29,16 +29,16 @@ A `.ply` file saved alongside the input file containing only the classified grou
 ## CSF Filtering.ipynb (+cloth_nodes)
 This file uses a cloth simulation filter, CSF in short. The pointcloud is inverted and a simulated cloth is layed op top of the surface. All points within a certain threshold of that cloth will be taken as ground.
 
-**usage** \
+**Usage** \
 This file uses ground segmentation on a single from from a ROS2.mcap recording, using the cloth simulation filter (CSF) algorithm. CSF works by inverting the point cloud upside down and draping a simulated cloth over the surface. All points withn a set distance threshold are classified as ground points.
 
-**input** \
+**Input** \
 The notebook needs a .mcap file with the following topics: \
 /rslidar/M1P_deskewed \
 /rslidar/helios_R \
 /rslidar/helios_L 
 
-**adjustable parameters** \
+**Adjustable parameters** \
 Input file - path to the .mcap file \
 Frame_index - the frame you want to process from the .mcap file \
 If you want to process a specific moment in time rather than a frame number, set USE_TIMESTAMP = True in Cell 1b and fill in TARGET_TIMESTAMP with a timestamp copied from Foxglove. The corresponding frame number will be determined automatically.
