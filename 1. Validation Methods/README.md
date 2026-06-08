@@ -1,26 +1,23 @@
-# Main file (NOG AFSCHRIJVEN LEON!):
-- validation_main.py [NOT DONE]
-  Script imports results from .npz files calculates validation metrics
+# File context and how to use them
+Every file's context and usage will be explained briefly.
 
 ---
 
-# Others:
-- **extract_pointcloud_segment.py** [NOT DONE]
-  Script to extract a point cloud segment of a full point cloud based
-  on begin and end time
+## Physical_meas.py
 
-- **AHN4_validation_strip.ipynb** [DONE]
-  Script to get data from AHN4 height map based on gps coordinates at a 
-  single timestamp. The strip is only calculated -5m to 25m in front of the
-  gps not the actual route.
+This script reads height-increment measurements collected physically along a route (for example using a measuring wheel or ruler at fixed intervals) from a CSV file. It computes a cumulative height profile for each measurement column, plots the elevation curves over distance, and saves the result as a compressed `.npz` file in the standardised format used by `Validation_main.py` for cross-comparison with the calculated profiles.
 
-  - **Validation_IMU_GPS.ipynb** [NOT DONE]
-  Gets data from IMU and GPS to calculate global route and height. It also
-  calculates the height at a timestamp to 25m in front of the gps. (The actual
-  route not a strip). 
+**Input** \
+A `.csv` file named `Physical_meas_data.csv` placed in the same folder as the script. Each column contains height increments in centimetres and the first row contains the column headers used as plot labels.
 
-  - **IMU_validation.ipynb** [NOT USED]
-  Compares the 4 IMU measurements against each other.
+**Adjustable parameters** \
+`SAVE_DIR` — folder where the `.npz` output is written \
+`TIME` — Unix timestamp to associate with this run (must match the timestamps used in `Validation_main.py` for the results to be paired correctly) \
+`method` — label string used as the filename prefix and stored in the `.npz` as the method identifier \
+Distance per increment — the constant `0.222` on line 20 sets the metres per measurement step; update this to match the actual interval used during the physical measurement
 
-  - **IMU test.py** [NOT USED]
-  Was the original script before ipynb, now not used.
+**Output** \
+A compressed `.npz` file saved as `<method>_<TIME>.npz` in `SAVE_DIR`, containing: \
+`z` — cumulative height profile (m) \
+`s` — distance along the profile (m) \
+`method` — label string
