@@ -105,17 +105,7 @@ Supervisor: Dr. H. Caesar
 
 **Delete KISS ICP Results eventually**
 
-**Make sure all seperate files are explained (usage/how it works)**
-  
-  Curvature Calculation README
-  
-  Useful scripts README
-
-  pipeline README
-
+**Deeply read all the README's in the folders and optionally put in Pictures**
   
 **Update this Overview README to explain the structure and purpose of the repository coherently**
-
-**Don't forget to talk about installing ZED-SDK and CUDA!**
-
 
