@@ -137,4 +137,4 @@ Outputs of the quadratic plane fitting looks something like this:
 ![IRLS Plane Fitting](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/IRLS_quadratic_plane_fitting.png)
 
 After the plane is fitted, further calculations are done. An example of the output:
-![Calculation via IRLS](Pictures/Calculation_via_IRLS.png)
+![Calculation via IRLS](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Calculation_via_IRLS.png)
