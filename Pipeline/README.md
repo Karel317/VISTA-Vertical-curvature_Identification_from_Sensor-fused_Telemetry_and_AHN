@@ -54,6 +54,9 @@ This script orchestrates the three non-LiDAR validation methods: AHN5, IMU/GPS (
 **Output** \
 Delegated to the individual validation scripts (AHN5, EKF, KISS ICP); each saves `.npz` files to `OUTPUT_PATH/<date>/<time>/<int(TIME)>/`
 
+**Warning**
+For the IMU_INPUT, specifically to convert .svo files to .mcap files, you need to install ZED SDK and CUDA. This is only possible if you have a NVIDIA GPU. The documentation and downloads can be found with the following link: https://www.stereolabs.com/developers/release. If CUDA isn't already on your machine, the installer at this link offers to download and install it (or you can install it yourself from NVIDIA's CUDA Toolkit archive). 
+
 ---
 
 ## Validation_main.py
