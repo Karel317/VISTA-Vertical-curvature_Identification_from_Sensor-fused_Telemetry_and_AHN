@@ -105,8 +105,12 @@ Supervisor: Dr. H. Caesar
 
 Delete all unnessecary files
 Make sure all seperate files are explained (usage/how it works)
+  Validation methods README
+  Filtering methods README
+  Curvature Calculation README
+  Useful scripts README
 Update this Overview README to explain the structure and purpose of the repository coherently
-Update the requirements file
+Update Requirements file                                                                                                       (DONE)
 Don't forget to talk about installing ZED-SDK and CUDA!
 
 
