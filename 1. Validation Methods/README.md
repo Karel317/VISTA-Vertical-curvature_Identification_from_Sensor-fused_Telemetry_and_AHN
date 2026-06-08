@@ -21,3 +21,6 @@ A compressed `.npz` file saved as `<method>_<TIME>.npz` in `SAVE_DIR`, containin
 `z` — cumulative height profile (m) \
 `s` — distance along the profile (m) \
 `method` — label string
+
+Example output:
+![Physical_meas_bridges](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Physical_meas_bridges.png)
