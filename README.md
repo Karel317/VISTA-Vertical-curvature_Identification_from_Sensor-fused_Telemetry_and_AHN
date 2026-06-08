@@ -107,8 +107,6 @@ Supervisor: Dr. H. Caesar
 
 **Make sure all seperate files are explained (usage/how it works)**
   
-  Filtering methods README
-  
   Curvature Calculation README
   
   Useful scripts README
