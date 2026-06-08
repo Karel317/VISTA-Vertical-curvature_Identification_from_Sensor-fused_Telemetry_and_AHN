@@ -115,6 +115,8 @@ Supervisor: Dr. H. Caesar
   
   Useful scripts README
 
+  pipeline README
+
   
 **Update this Overview README to explain the structure and purpose of the repository coherently**
 
