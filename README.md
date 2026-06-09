@@ -1,4 +1,4 @@
-# VERVE - Vertical-Curvature Estimation from Fused Roadway Sensors (LiDAR, IMU, GPS, AHN)
+# VERVE - Vertical-Curvature Estimation from Fused Roadway Sensors on the SenseBike (LiDAR, IMU, GPS, AHN)
 
 A LiDAR-based curvature detection/calculation pipeline that compares vertical curvature calculation methods and builds the foundation to classify/detect curvature in datasets.
 
