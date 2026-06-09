@@ -92,7 +92,7 @@ A compressed `.npz` file saved to `OUTPUT_PATH/<date>/<time>/<int(TIME)>/KISS_IC
 
 Example output:
 
-![KISS_ECP_data](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/KISS_ICP_data.jpeg)
+![KISS_ICP_data](Pictures/KISS_ICP_data.png)
 
 ---
 
