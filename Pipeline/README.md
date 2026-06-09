@@ -83,6 +83,8 @@ This script loads `.npz` result files from validation methods (physical measurem
 A `.csv` file at `C:\Users\karel\OneDrive\BEP\<timestamp>.csv` with RMSE, MAE, and fraction-in-threshold for every method pair \
 Plots: elevation profile overlay, curvature profile overlay (log scale), elevation difference plot
 
+The output .csv files can be merged by using the merge_csvs.py in Useful scripts. The script merges all the files to one .csv file containing all the data. 
+
 ---
 
 ## Random Frame Generator.ipynb
