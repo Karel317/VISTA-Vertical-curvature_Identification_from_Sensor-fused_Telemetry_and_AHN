@@ -84,27 +84,6 @@ A compressed `.npz` file saved to `OUTPUT_PATH/<date>/<time>/<int(TIME)>/KISS_IC
 
 ---
 
-## IRLS.ipynb
-
-This notebook fits a single global quadric surface z = ax² + bxy + cy² + dx + ey + f to a ground-only point cloud using Iteratively Reweighted Least Squares (IRLS) with the Tukey biweight loss function. The iterative weighting automatically suppresses outliers (residual vegetation, noise) without requiring manual thresholds. Mean and Gaussian curvature are then computed analytically from the fitted quadric coefficients. A forward 1-D height and curvature profile is extracted by slicing the fitted surface at a fixed y position along the strip.
-
-**Input** \
-A nuScenes-format `(N, 5)` `float32` `.bin` file containing ground-only points from `Patchwork++ Filter.ipynb` or `CSF Filtering.ipynb`
-
-**Adjustable parameters** \
-`BIN_PATH` — path to the ground-only `.bin` file \
-`ROI_X` / `ROI_Y` — region of interest for the quadric fit (default: full X extent, `±1.0 m` in Y) \
-`PROFILE_X_RANGE` — x-extent of the forward 1-D profile in metres \
-`PROFILE_Y_HALF` — half-width of the strip used to extract the 1-D profile \
-`PROFILE_BIN` — bin width for the raw median height dots in the profile plot \
-`IRLS_MAX_ITER` — maximum IRLS iterations (default: `30`) \
-`IRLS_C_TUKEY` — Tukey biweight constant (default: `4.685`, giving 95% Gaussian efficiency)
-
-**Output** \
-Plots: 3D view of points and fitted quadric surface, residual BEV map, residual histogram with IRLS weight distribution, mean and Gaussian curvature BEV maps, forward 1-D height / slope / curvature profile
-
----
-
 ## PCA_RANSAC_Height Derivative.ipynb
 
 This notebook (Pipeline Stage 2) reads ground-only point cloud files from the Patchwork++ filter notebook and computes a forward 1-D road elevation and curvature profile using three methods: PCA (covariance-based plane fitting per bin), RANSAC (consensus plane fitting per bin), and height-derivative (median height per bin differentiated twice numerically). All three share the same binning grid, smoothing, and differentiation parameters so results are directly comparable. A 2-D heatmap view is also produced for each method. Results are saved as `.npz` files in the shared format for `Validation_main.py`.
