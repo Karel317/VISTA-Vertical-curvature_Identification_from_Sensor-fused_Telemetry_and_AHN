@@ -1,6 +1,6 @@
 # Dutch Hills Dataset: Identifying vertical curvature using the SenseBike, a sensor equipped bicycle
 
-A LiDAR-based curvature detection/calculation pipeline that builds a dataset with vertical curvature and identifies that curvature in 3D point clouds.
+A LiDAR-based curvature detection/calculation pipeline that compares vertical curvature calculation methods and builds the foundation to classify/detect curvature in datasets.
 
 This repository accompanies a Bachelor's End Thesis conducted at **Delft University of Technology**, Department of **Cognitive Robotics**.
 
@@ -19,13 +19,11 @@ Traditional ground segmentation methods often assume a flat or near-flat ground 
 ```
 lidar-ground-segmentation/
 ├── 1. Validation/                  # Scripts that validate the curvature calculation from "3. Curvature Calculation"
-├── 2. Filtering Methods/           # Ground segmentation methods
-├── 3. Curvature Calculation/       # Calculation methods that identify and quantify vertical curvature
+├── 2. Filtering Methods/           # Ground segmentation methods for surfaces with vertical curvature
+├── 3. Curvature Calculation/       # Calculation methods that quantify vertical curvature
 ├── Pictures                        # Pictures used in the READMEs
-├── Results                         # WHAT THE HELLY IS THIS
-├── .gitattributes
-├── .mcap_to_.bin.ipynb             # .mcap to .bin format converter
-├── IMU SVO to MCAP.py              # .svo to .mcap format converter
+├── Pipeline                        # Scripts that automate the calculation and validation processes
+├── Useful scripts                  # Useful scripts when working in this repository or pointclouds in general
 ├── README.md
 ├── environment.yml
 └── requirements.txt                # pip requirements
@@ -72,13 +70,13 @@ Now run the desired files via VSCode.
 
 
 ## 📊 Results
-The Validation Methods folder involves scripts that use the AHN Height map and several sensors in order to provide a method to validate the vertical curvature calculation on the 3D pointclouds. Example output:
-![Picture/IMU_data.jpeg](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/IMU_data.jpeg)
+The Validation Methods folder involves scripts that use physical measurements in order to provide a method to validate the vertical curvature calculation on the 3D pointclouds. Example output:
+![Picture/IMU_data.jpeg](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Physical_meas_bridges.png)
 
 The Filtering Methods folder involves scripts that apply filtering methods to identify groundpoints on curved terrain accurately. Example output:
 ![Patchwork++ Pointcloud filter](Pictures/Filtering_readme.png)
 
-The Curvature Calculation folder involves scripts that apply methods to calculate curvature on from 3D pointclouds. Example output:
+The Curvature Calculation folder involves scripts that apply methods to calculate curvature from 3D pointclouds. Example output:
 ![IRLS quadratic plane fitting](Pictures/IRLS_quadratic_plane_fitting.png)
 ![RANSAC Pointcloud Calculation](Pictures/Patchwork_RANSAC_calculation.png)
 
@@ -108,6 +106,4 @@ Supervisor: Dr. H. Caesar
 **Add pictures in curvature calculation readme for AHN5, EKF and KISS ICP**
 
 **Check README for Random timestamps**
-  
-**Update this Overview README to explain the structure and purpose of the repository coherently**
 
