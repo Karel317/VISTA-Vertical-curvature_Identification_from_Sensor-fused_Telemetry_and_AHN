@@ -1,6 +1,6 @@
-# VERVE - Vertical-Curvature Estimation from Fused Roadway Sensors on the SenseBike (LiDAR, IMU, GPS, AHN)
+# VISTA - Vertical-curvature Identification from Sensor-fused Telemetry and AHN (LiDAR, IMU, GPS, AHN)
 
-A LiDAR-based curvature detection/calculation pipeline that compares vertical curvature calculation methods and builds the foundation to classify/detect curvature in datasets.
+A Sensor-fused Telemetry and AHN-based curvature detection/calculation pipeline that compares vertical curvature calculation methods and builds the foundation to classify/detect curvature in datasets.
 
 This repository accompanies a Bachelor's End Thesis conducted at **Delft University of Technology**, Department of **Cognitive Robotics**.
 
@@ -53,6 +53,10 @@ pip install -r requirements.txt
 ```
 
 ## 📂 Dataset
+
+The dataset is produced with the help of the TUDelft SenseBike.
+
+![SenseBike](https://github.com/Karel317/VERVE-Vertical-Curvature_Estimation_from_Fused_Roadway_Sensors/blob/main/Pictures/SenseBike.jpeg)
 
 The dataset is **not included** in this repository due to its size. Download it separately:
 
