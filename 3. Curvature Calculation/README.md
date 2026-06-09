@@ -126,6 +126,14 @@ Three compressed `.npz` files saved to `D:\Validation_results\<date>\<time>\`, o
 `PCA_<timestamp>.npz`, `RANSAC_<timestamp>.npz`, `height-deriv_<timestamp>.npz` \
 Each containing: `z`, `s`, `kappa`, `slope_deg`, `method`, and associated arrays
 
+Example output:
+
+![PCA](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/St.1.PW.PCA.png)
+
+![RANSAC](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/St.1.PW.RANSAC.png)
+
+![HD](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/St.1.PW.HD.png)
+
 ---
 
 ## IRLS.ipynb
