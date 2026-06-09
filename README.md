@@ -101,7 +101,5 @@ Supervisor: Dr. H. Caesar
 
 # To do's for GitHub Cleanup
 
-**Delete KISS ICP Results eventually**
-
 **Add pictures in curvature calculation readme for AHN5, EKF and KISS ICP**
 
