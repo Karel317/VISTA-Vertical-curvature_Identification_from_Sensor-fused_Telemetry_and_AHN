@@ -96,10 +96,3 @@ Department of Cognitive Robotics, Delft University of Technology
 Supervisor: Dr. H. Caesar
 
 ---
-
-
-
-# To do's for GitHub Cleanup
-
-**Add pictures in curvature calculation readme for AHN5, EKF and KISS ICP**
-
