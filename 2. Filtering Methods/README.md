@@ -24,6 +24,12 @@ A single point cloud file. Supported formats: `.bin` (KITTI/Velodyne), `.mcap` (
 **Output** \
 A `.ply` file saved alongside the input file containing only the classified ground points. During the run, four sequential interactive 3D viewer windows open: raw cloud coloured by height, detected objects with bounding boxes, red (removed) vs green (kept) comparison overlay, and the final ground-only cloud.
 
+Example of how it filters:
+
+![Object Detectioin](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Object%20Detection.jpeg)
+
+![Object Detection Points](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Object%20Detection%20Points.jpeg)
+
 ---
 
 ## CSF Filtering.ipynb (+cloth_nodes)
