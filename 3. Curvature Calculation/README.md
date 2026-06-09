@@ -29,6 +29,10 @@ Two compressed `.npz` files saved to `OUTPUT_PATH/<date>/<time>/<int(TIME)>/`, o
 `slope_deg` — slope profile (degrees) \
 `method` — `"AHN5 DSM"` or `"AHN5 DTM"`
 
+Example output:
+
+![AHN5_data](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/AHN5_data.jpeg)
+
 ---
 
 ## EKF.py
@@ -85,6 +89,10 @@ A compressed `.npz` file saved to `OUTPUT_PATH/<date>/<time>/<int(TIME)>/KISS_IC
 `z` — elevation profile relative to the bike position (m) \
 `s` — distance along the strip (m) \
 `method` — `"KISS_ICP"`
+
+Example output:
+
+![KISS_ECP_data](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/KISS_ICP_data.jpeg)
 
 ---
 
