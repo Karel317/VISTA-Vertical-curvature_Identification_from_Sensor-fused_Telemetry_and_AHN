@@ -97,3 +97,16 @@ This utility notebook generates a list of random Unix timestamps distributed uni
 
 **Output** \
 A sorted Python list of Unix timestamp floats printed to the notebook output, ready to paste into the pipeline notebook
+
+**Important Note**
+This script is unfinished. One of the research goals was to detect curvature over full .mcap files, but that was cut short due to time constraints. Here is how we planned to build that script:
+
+From the validation of curvature quantification, (STATE THE BEST METHOD HERE) turned out to perform the best. To test whether this method is also useful to detect curvature, random timestamps within a .mcap file are generated. The method would then run on these timestamps and classify it as LOW/MEDIUM/HIGH curvature:
+
+Low -> mostly flat (0-|0.05| 1/m)
+Medium -> small hills/minor bridges (|0.051|-|0.1| 1/m)
+High -> bridges, bigger hills (>|0.1| 1/m)
+(NOTE: this is specifically for Delft's surroundings, other areas might have a very different classification)
+
+The model would then output how many times it detects curvature and where. A researcher takes that information and checks it manually in foxglove to determine the successrate of the model.
+
