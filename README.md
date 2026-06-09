@@ -105,7 +105,7 @@ Supervisor: Dr. H. Caesar
 
 **Delete KISS ICP Results eventually**
 
-**Deeply read all the README's in the folders and optionally put in Pictures**
+**Add pictures in curvature calculation readme for AHN5, EKF and KISS ICP**
   
 **Update this Overview README to explain the structure and purpose of the repository coherently**
 
