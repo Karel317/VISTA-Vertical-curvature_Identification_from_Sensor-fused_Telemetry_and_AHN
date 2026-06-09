@@ -1,4 +1,4 @@
-# Dutch Hills Dataset - Vertical-curvature Identification from Sensor-fused Telemetry and AHN (LiDAR, IMU, GPS, AHN)
+# Dutch Hills Dataset - (NOG AANPASSEN, TE COMPLEX NU) Vertical-curvature Identification from Sensor-fused Telemetry and AHN (LiDAR, IMU, GPS, AHN)
 
 A Sensor-fused Telemetry and AHN-based curvature detection/calculation pipeline that compares vertical curvature calculation methods and builds the foundation to classify/detect curvature in datasets.
 
