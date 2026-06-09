@@ -56,6 +56,12 @@ frameXXX_merged.ply — full fused point cloud \
 frameXXX_ground.bin — ground points in KITTI format \
 frameXXX_topview.png / frameXXX_sideview.png / frameXXX_bev_comparison.png — visualisations
 
+Example of how it filters:
+
+![CSF method](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/csf.png)
+
+![CSF Filter](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/CSF%20Filtering.png)
+
 ---
 
 ## Patchwork++ Filter.ipynb
