@@ -56,6 +56,10 @@ Two compressed `.npz` files saved to `OUTPUT_PATH/<date>/<time>/<int(TIME)>/`: \
 `EKF_curvature_validation_<TIME>.npz` — curvature profiles: `kappa_terrain_spline`, `kappa_terrain_pitch`, `kappa_path` \
 `Z_positional_tracking_<TIME>.npz` — elevation profile from ZED positional tracking
 
+Example output:
+
+![IMU_data](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/IMU_data.jpeg)
+
 ---
 
 ## KISS ICP.py
