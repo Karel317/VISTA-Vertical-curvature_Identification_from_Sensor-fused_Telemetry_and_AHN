@@ -28,7 +28,7 @@ Example of how it filters:
 
 ![Object Detection](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Object%20Detection.jpeg)
 
-![Points](https://raw.githubusercontent.com/Karel317/LiDAR_based_vertical_curvature_calculation/main/Pictures/Object%20Detection%20Points.jpeg)
+![Points](Pictures/Object_Detection_Points.jpeg)
 
 ---
 
