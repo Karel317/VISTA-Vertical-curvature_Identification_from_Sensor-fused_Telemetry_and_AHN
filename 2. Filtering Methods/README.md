@@ -89,3 +89,7 @@ Per timestamp, up to three nuScenes-format `(N, 5)` `float32` `.bin` files saved
 `*_raw.bin` — full unfiltered scene before Patchwork++ (for before/after comparison in Foxglove) \
 `*_pw.bin` — ground points only after Patchwork++ (direct input to `PCA_RANSAC_Height Derivative.ipynb`) \
 `*_pw_full.bin` — full scene with intensity `0.0` = ground / `1.0` = obstacle (Foxglove inspection)
+
+Example of Filtering:
+
+![PW++ Filter](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Filtering_readme.png)
