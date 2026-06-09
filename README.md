@@ -105,5 +105,3 @@ Supervisor: Dr. H. Caesar
 
 **Add pictures in curvature calculation readme for AHN5, EKF and KISS ICP**
 
-**Check README for Random timestamps**
-
