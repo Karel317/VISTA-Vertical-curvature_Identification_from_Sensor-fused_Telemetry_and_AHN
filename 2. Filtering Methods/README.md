@@ -26,7 +26,7 @@ A `.ply` file saved alongside the input file containing only the classified grou
 
 Example of how it filters:
 
-![Object Detectioin](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Object%20Detection.jpeg)
+![Object Detection](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Object%20Detection.jpeg)
 
 ![Object Detection Points](https://github.com/Karel317/LiDAR_based_vertical_curvature_calculation/blob/main/Pictures/Object%20Detection%20Points.jpeg)
 
