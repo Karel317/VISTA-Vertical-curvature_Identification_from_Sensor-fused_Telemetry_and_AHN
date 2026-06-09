@@ -58,7 +58,7 @@ The dataset is produced with the help of the TUDelft SenseBike.
 
 ![SenseBike](https://github.com/Karel317/VERVE-Vertical-Curvature_Estimation_from_Fused_Roadway_Sensors/blob/main/Pictures/SenseBike.jpeg)
 
-The dataset is **not included** in this repository due to its size. Download it separately:
+This dataset is **not included** in this repository due to its size. Download it separately:
 
 The data is stored on a hard drive and the SenseBike, which are in the hands of the TU Delft Department of Cognitive Robotics.
 
