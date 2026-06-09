@@ -39,7 +39,7 @@ Printed coordinate values, distances, and bearing angles in the notebook output
 
 ## Cutting_MCAP.py
 
-This script cuts a time slice from an `.mcap` recording, keeping only the messages between a specified start and end Unix timestamp. All topics and the TF tree are preserved in the output file. The output filename and folder are derived automatically from the date and time encoded in the input file path.
+This script cuts a time slice from a `.mcap` recording, keeping only the messages between a specified start and end Unix timestamp. All topics and the TF tree are preserved in the output file. The output filename and folder are derived automatically from the date and time encoded in the input file path.
 
 **Input** \
 The original uncut `.mcap` recording file
