@@ -26,16 +26,18 @@ import time as _time
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "3. Curvature Calculation"))
+
 
 # ── SHARED CONFIG (one place to set the run) ─────────────────────────────────
-TIME        = 1779439978.16773          # reference Unix timestamp
+TIME        = 1779438960.547610          # reference Unix timestamp
 OUTPUT_PATH = r"D:\Validation_results"      # base results folder
 GPS_TOPIC   = "/navsat_topic"
 PLOT        = False                         # note: each task's plot blocks until its window is closed
 
 # Input files
-MAIN_MCAP  = r"D:\Data_gathered\2026_05_22\Rosbag\10_50_00\rosbag\rosbag_0.mcap"
-IMU_INPUT = r"D:\Data_gathered\2026_05_22\Camera\10_50_00\front_22_05_2026-10_50_00.svo2"  # .mcap / .svo / .svo2
+MAIN_MCAP  = r"D:\Data_gathered\2026_05_22\Rosbag\10_35_00\rosbag\rosbag_0.mcap"
+IMU_INPUT = r"D:\Data_gathered\2026_05_22\Camera\10_35_00\front_22_05_2026-10_35_00.svo2"  # .mcap / .svo / .svo2"  # .mcap / .svo / .svo2
 
 # ── REGISTRY ─────────────────────────────────────────────────────────────────
 # name : (enabled, module_name, how-to-call-its-run)
@@ -43,15 +45,15 @@ IMU_INPUT = r"D:\Data_gathered\2026_05_22\Camera\10_50_00\front_22_05_2026-10_50
 # module's own run() signature.
 REGISTRY = {
     "ahn5": (
-        True, "AHN5_validation",
+        True, "AHN5",
         lambda m: m.run(MAIN_MCAP, TIME, GPS_TOPIC, PLOT),
     ),
     "IMU_GPS": (
-        True, "Validation_curvature_IMU_GPS",
+        True, "EKF",
         lambda m: m.run(IMU_INPUT, MAIN_MCAP, TIME, GPS_TOPIC, PLOT, OUTPUT_PATH),
     ),
     "KISS_ICP": (
-        True, "KISS_ICP_validation",
+        True, "KISS ICP",
         lambda m: m.run(MAIN_MCAP, TIME, PLOT, OUTPUT_PATH),
     ),
     # ── add more validations here, same pattern ──

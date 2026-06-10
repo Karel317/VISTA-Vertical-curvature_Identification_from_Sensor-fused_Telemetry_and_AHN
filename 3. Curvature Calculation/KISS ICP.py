@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 from pathlib import Path
 import yaml
@@ -6,6 +7,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from kiss_icp.pipeline import OdometryPipeline
 from kiss_icp.datasets import dataset_factory
+
+# Shared MCAP cutting helper (same one AHN5.py / EKF.py use). Add this file's
+# folder to sys.path so the import resolves however the module is loaded.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from mcap_utils import cut_mcap
 
 # Disable the "latest" symlink kiss_icp tries to create — it needs extra
 # permissions on Windows and we don't use it. (from run_kiss_icp.py)
@@ -23,6 +29,11 @@ OUTPUT_PATH  = r"D:\Validation_results"       # where the .npz profile is saved
 
 TIME         = 1779439917.972930459           # reference Unix timestamp
 
+# Cut the LiDAR mcap to TIME ± LIDAR_WINDOW seconds before running KISS-ICP, so
+# odometry only processes the relevant stretch instead of the whole rosbag.
+# Must be large enough that the trajectory still spans X_BACK..X_FRONT in metres.
+LIDAR_WINDOW = 20.0                           # s, half-width of the cut window
+
 # Strip geometry — extent along the trajectory, relative to the bike at TIME
 X_BACK       = -5.0                           # m behind the bike
 X_FRONT      = 20.0                           # m in front
@@ -30,30 +41,23 @@ X_FRONT      = 20.0                           # m in front
 METHOD       = "KISS_ICP"                     # .npz `method` field + filename prefix
 
 # KISS-ICP run flags (only used when poses must be (re)computed)
-SHORTENED         = True   # how to derive the <date> <time> results folder name
 CUSTOM_PARAMETERS = False  # override individual kiss_icp.yaml params below
 LIVE_VISUALIZE    = False  # live odometry visualisation (slows processing)
 
 SCRIPT_DIR        = Path(__file__).parent
-KISS_RESULTS_ROOT = SCRIPT_DIR.parent / "KISS ICP" / "KISS ICP results"
-YAML_PATH         = SCRIPT_DIR.parent / "KISS ICP" / "kiss_icp.yaml"
+KISS_RESULTS_ROOT = SCRIPT_DIR / "KISS ICP results"
+YAML_PATH         = SCRIPT_DIR / "KISS_ICP.yaml"
 
 # ── Helper functions ─────────────────────────────────────────────────────────
 
 def _results_dir_for(dataset_path):
-    """Derive the 'KISS ICP results/<date> <time>' folder from the dataset path.
+    """Derive the 'KISS ICP results/<name>' cache folder from the dataset path.
 
-    Mirrors run_kiss_icp.py: SHORTENED controls how date/time are sliced out of
-    the path.
+    `dataset_path` is the cut MCAP, whose stem already encodes the source rosbag,
+    the reference timestamp and the window — so it uniquely keys the poses cache
+    per (source, TIME, LIDAR_WINDOW).
     """
-    dataset_path = Path(dataset_path)
-    if SHORTENED:
-        date = dataset_path.parts[-2]      # e.g. "2026_05_22"
-        time = dataset_path.stem[-8:]      # last 8 chars e.g. "10_50_00"
-    else:
-        date = dataset_path.parts[-5]
-        time = dataset_path.parts[-3]
-    return KISS_RESULTS_ROOT / f"{date} {time}"
+    return KISS_RESULTS_ROOT / Path(dataset_path).stem
 
 
 def _load_or_run_kiss(dataset_path, topic, results_dir):
