@@ -35,7 +35,7 @@ plt.tight_layout()
 # Save results to external drive
 
 
-SAVE_DIR = r"C:\Users\Leons\OneDrive - Delft University of Technology\BEP"
+SAVE_DIR = r"D:\Validation_results\Physical_validation_data"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 
