@@ -17,7 +17,6 @@ Traditional ground segmentation methods often assume a flat or near-flat ground 
 ## 📁 Repository Structure
 
 ```
-lidar-ground-segmentation/
 Validation/                     # Scripts that validate the curvature calculation from "3. Curvature Calculation"
 Filtering Methods/              # Ground segmentation methods for surfaces with vertical curvature
 Curvature Calculation/          # Calculation methods that quantify vertical curvature
