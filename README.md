@@ -17,12 +17,12 @@ Traditional ground segmentation methods often assume a flat or near-flat ground 
 ## 📁 Repository Structure
 
 ```
-Validation/                     # Scripts that validate the curvature calculation from "3. Curvature Calculation"
-Filtering Methods/              # Ground segmentation methods for surfaces with vertical curvature
 Curvature Calculation/          # Calculation methods that quantify vertical curvature
+Filtering Methods/              # Ground segmentation methods for surfaces with vertical curvature
 Pictures                        # Pictures used in the READMEs
 Pipeline                        # Scripts that automate the calculation and validation processes
 Useful scripts                  # Useful scripts when working in this repository or pointclouds in general
+Validation/                     # Scripts that validate the curvature calculation from "3. Curvature Calculation"
 README.md
 environment.yml
 requirements.txt                # pip requirements
