@@ -1,0 +1,7 @@
+- Results for McapDataloader Sequence rosbag_0_1779438955_20s_13750908410_1779439200_rslidar-M1P_… -
++-------------------+-------+-------+
+|            Metric | Value | Units |
++===================+=======+=======+
+| Average Frequency |  19   | Hz    |
+|   Average Runtime |  51   | ms    |
++-------------------+-------+-------+

@@ -11,7 +11,7 @@ from kiss_icp.datasets import dataset_factory
 # Shared MCAP cutting helper (same one AHN5.py / EKF.py use). Add this file's
 # folder to sys.path so the import resolves however the module is loaded.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from mcap_utils import cut_mcap
+from mcap_utils import cut_mcap, shared_cut_mcap
 
 # Disable the "latest" symlink kiss_icp tries to create — it needs extra
 # permissions on Windows and we don't use it. (from run_kiss_icp.py)
@@ -248,8 +248,14 @@ def run(input_file, timestamp, plot=False, output_path=OUTPUT_PATH):
     else:
         dataset_path = DATASET_PATH
 
-    results_dir = _results_dir_for(dataset_path)
-    poses, timestamps = _load_or_run_kiss(dataset_path, TOPIC, results_dir)
+    # Cut to a short slice instead of the full rosbag. Use the SHARED cut (GPS +
+    # LiDAR topics over SHARED_CUT_WINDOW_S) so that if AHN5/EKF already cut this
+    # bag for the same TIME, KISS-ICP reuses that exact file instead of cutting
+    # again; otherwise KISS-ICP creates it and they reuse it. cut_mcap caches.
+    cut_path = shared_cut_mcap(dataset_path, timestamp)
+
+    results_dir = _results_dir_for(cut_path)
+    poses, timestamps = _load_or_run_kiss(cut_path, TOPIC, results_dir)
     s_rel, z_rel, ref_idx, trajectory = _extract_profile(poses, timestamps, timestamp)
     fpath = _save_output(timestamp, s_rel, z_rel, results_dir)
     if plot:

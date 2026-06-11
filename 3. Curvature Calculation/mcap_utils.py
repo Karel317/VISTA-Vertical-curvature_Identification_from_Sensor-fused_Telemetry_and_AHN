@@ -60,6 +60,34 @@ def cut_mcap(input_file, timestamp, window_s, topics=None):
     return str(out_path)
 
 
+# ── shared_cut_mcap ──────────────────────────────────────────────────────────
+# AHN5 (GPS), EKF (GPS) and KISS-ICP (LiDAR) all slice the SAME main rosbag.
+# Instead of each module cutting the full bag separately, they request ONE shared
+# cut that keeps every topic any of them needs, over the widest window. Because
+# the cut_mcap cache key (input + TIME + window + topics) is then identical for
+# all three, whichever module runs first creates the slice and the others reuse
+# it — the bag is read once, not three times.
+GPS_TOPIC           = "/navsat_topic"           # GPS topic in the main rosbag
+LIDAR_TOPIC         = "/rslidar/M1P_deskewed"   # LiDAR topic in the main rosbag
+SHARED_CUT_TOPICS   = [GPS_TOPIC, LIDAR_TOPIC]  # order matters: defines the cache key
+SHARED_CUT_WINDOW_S = 30.0                      # widest +/- window any stage needs
+
+
+def shared_cut_mcap(input_file, timestamp, extra_topics=None, window_s=SHARED_CUT_WINDOW_S):
+    """Cut the main rosbag once, keeping all topics the pipeline needs, so AHN5/
+    EKF (GPS) and KISS-ICP (LiDAR) reuse a single slice. Returns the cut path.
+
+    `extra_topics` adds any topic not already in SHARED_CUT_TOPICS (e.g. a GPS
+    topic that differs from the default). Topic order is kept stable so the cache
+    key matches across modules.
+    """
+    topics = list(SHARED_CUT_TOPICS)
+    for t in (extra_topics or []):
+        if t not in topics:
+            topics.append(t)
+    return cut_mcap(input_file, timestamp, window_s, topics=topics)
+
+
 # ── load_gps ─────────────────────────────────────────────────────────────────
 
 def load_gps(input_file, gps_topic, timestamp, window_s):
@@ -76,8 +104,11 @@ def load_gps(input_file, gps_topic, timestamp, window_s):
     """
     import numpy as np
 
-    # First cut to a small window so reading is fast
-    cut_file = cut_mcap(input_file, timestamp, window_s, topics=[gps_topic])
+    # Cut via the SHARED slice (GPS + LiDAR topics) so AHN5/EKF and KISS-ICP reuse
+    # one cut of the bag. Reading below still filters to +/- window_s. The cut
+    # window is at least SHARED_CUT_WINDOW_S so KISS-ICP can reuse the same file.
+    cut_file = shared_cut_mcap(input_file, timestamp, extra_topics=[gps_topic],
+                               window_s=max(window_s, SHARED_CUT_WINDOW_S))
 
     t_min = timestamp - window_s
     t_max = timestamp + window_s

@@ -30,14 +30,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 
 # ── SHARED CONFIG (one place to set the run) ─────────────────────────────────
-TIME        = 1779438960.547610          # reference Unix timestamp
+TIME        = 1779440660.74045          # reference Unix timestamp
 OUTPUT_PATH = r"D:\Validation_results"      # base results folder
 GPS_TOPIC   = "/navsat_topic"
 PLOT        = False                         # note: each task's plot blocks until its window is closed
 
 # Input files
-MAIN_MCAP  = r"D:\Data_gathered\2026_05_22\Rosbag\10_35_00\rosbag\rosbag_0.mcap"
-IMU_INPUT = r"D:\Data_gathered\2026_05_22\Camera\10_35_00\front_22_05_2026-10_35_00.svo2"  # .mcap / .svo / .svo2"  # .mcap / .svo / .svo2
+MAIN_MCAP  = r"D:\Data_gathered\2026_05_22\Rosbag\11_00_00\rosbag\rosbag_0.mcap"
+IMU_INPUT = r"D:\Data_gathered\2026_05_22\Camera\11_00_00\front_22_05_2026-11_00_00.svo2"  # .mcap / .svo / .svo2"
 
 # ── REGISTRY ─────────────────────────────────────────────────────────────────
 # name : (enabled, module_name, how-to-call-its-run)

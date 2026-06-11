@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 # Physical-measurement results may be in a different timestamp folder than the
 # LiDAR/calculation results (they are run separately and saved under their own timestamp).
 VALIDATION_DIR   = r"D:\Validation_results\Physical_validation_data"   # physical meas .npz files
-CALCULATION_DIR  = r"D:\Validation_results\2026_05_22\10_51_56\1779439916"   # lidar/calculation .npz files
+CALCULATION_DIR  = r"D:\Validation_results\2026_05_22\10_35_55\1779438955"   # lidar/calculation .npz files
 
 # D:\Validation_results\2026_05_22\10_42_57\1779439377
 # D:\Validation_results\2026_05_22\10_44_36\1779439476
@@ -32,9 +32,9 @@ CALCULATION_DIR  = r"D:\Validation_results\2026_05_22\10_51_56\1779439916"   # l
 VALIDATION_PREFIXES = [
     #"Physical_meas_Sint_Jorispad_Brug",
     #"Physical_meas_Sint_Jorispad_Brug_backwards",
-    #"Physical_meas_Flat_25m",
+    "Physical_meas_Flat_25m",
     #"Physical_meas_Proteus_Brug",
-    "Physical_meas_Station_Brug",
+    #"Physical_meas_Station_Brug",
     #"Physical_meas_Station_Brug_backwards"
 ]
 CALCULATION_PREFIXES = [
@@ -55,7 +55,10 @@ CALCULATION_PREFIXES = [
 THRESHOLD          = 0.1    # m   : |Δz| a threshold used in the comparison as a metric
 
 # ── General ───────────────────────────────────────────────────────────────────
-SMOOTHENING_FACTOR = 0.05       #       spline smoothing (0 = none, higher = smoother)
+SMOOTHENING_FACTOR = 0.5        #       spline smoothing as a *per-point* budget:
+                                #       scipy's s is an absolute sum-of-squared-residuals
+                                #       budget, so the effective s = factor * N points
+                                #       (1.0 -> s == number of points; 0 = no smoothing)
 BOTTOM_LIMIT_KAPPA = 1e-8    # 1/m : lower y-limit for the (log-scaled) curvature plot
 PHYS_MEAS_SUBSTR   = "Physical_meas"  # substring identifying the physical measurement profile
 
@@ -64,7 +67,7 @@ PHYS_MEAS_SUBSTR   = "Physical_meas"  # substring identifying the physical measu
 # physical measurement when there is no peak. After trimming, the window start
 # is re-origined to s=0.
 ALIGN_TO_REFERENCE = True
-START_VALIDATION   = 8.0     # m   : user-given s where the physical measurement rises
+START_VALIDATION   = 0.0     # m   : user-given s where the physical measurement rises
 WINDOW_BACK_M      = 5
 WINDOW_FWD_M       = 20.0    # m   : fallback right edge (START_VALIDATION + this) if no peak/end is found
 
@@ -77,6 +80,14 @@ FINE_ALIGN_W_MAE    = 0.5    #       score = W*MAE_norm + (1-W)*(1-correlation)
 
 ON_BRIDGE = False
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+def _spl(x, y, factor):
+    """make_splrep with the smoothing budget scaled to the number of points.
+    scipy's `s` is an absolute sum-of-squared-residuals budget that must grow
+    with the sample count, so we pass s = factor * len(y) (factor == per-point
+    budget; 1.0 makes s equal to the number of data points)."""
+    return sc.make_splrep(x, y, s=factor * len(y))
 
 
 def _name_matches_prefix(stem, prefix):
@@ -166,8 +177,8 @@ def trim_physical_validation(store_list, left_P, right_P, smoothing_factor):
                 if arr is not None and np.ndim(arr) > 0 and np.size(arr) == mask.size:
                     d[key] = np.asarray(arr)[mask]
             d["s"] = np.asarray(d["s"], float) - left_P   # re-origin: window start -> 0
-            d["spline_z"]     = sc.make_splrep(d["s"], d["z"],     s=smoothing_factor)
-            d["spline_kappa"] = sc.make_splrep(d["s"], d["kappa"], s=smoothing_factor)
+            d["spline_z"]     = _spl(d["s"], d["z"],     smoothing_factor)
+            d["spline_kappa"] = _spl(d["s"], d["kappa"], smoothing_factor)
             print(f"  [{label} – {method}]: trimmed to s in "
                 f"[{left_P:.3f}, {right_P:.3f}] m and re-origined "
                 f"({s.size} -> {n_keep} points)")
@@ -202,8 +213,8 @@ def trim_profiles_to_window(store_list, win_left, win_right, smoothing_factor=0.
                 if arr is not None and np.ndim(arr) > 0 and np.size(arr) == mask.size:
                     d[key] = np.asarray(arr)[mask]
             d["s"] = np.asarray(d["s"], float) - win_left   # re-origin: window start -> 0
-            d["spline_z"]     = sc.make_splrep(d["s"], d["z"],     s=smoothing_factor)
-            d["spline_kappa"] = sc.make_splrep(d["s"], d["kappa"], s=smoothing_factor)
+            d["spline_z"]     = _spl(d["s"], d["z"],     smoothing_factor)
+            d["spline_kappa"] = _spl(d["s"], d["kappa"], smoothing_factor)
             print(f"  [{label} – {method}]: trimmed to s in "
                   f"[{win_left:.3f}, {win_right:.3f}] m and re-origined "
                   f"({s.size} -> {n_keep} points)")
@@ -268,8 +279,8 @@ def fine_align_to_window(store_list, ref_store, ref_substr, left_C, right_C,
 
             s_new = d["s"] + best_shift
             d["s"] = s_new
-            d["spline_z"]     = sc.make_splrep(s_new, d["z"],     s=smoothing_factor)
-            d["spline_kappa"] = sc.make_splrep(s_new, d["kappa"], s=smoothing_factor)
+            d["spline_z"]     = _spl(s_new, d["z"],     smoothing_factor)
+            d["spline_kappa"] = _spl(s_new, d["kappa"], smoothing_factor)
             print(f"  [{label} – {method}]: fine shift {best_shift:+.3f} m "
                   f"(score {best_score:.4f})")
 
@@ -310,21 +321,21 @@ for label, store in [("VALIDATION", results_validation), ("CALCULATION", results
 
         valid = np.isfinite(z)        # keep only finite points
         z, s  = z[valid], s[valid]
-        sp_z = sc.make_splrep(s, z, s=SMOOTHENING_FACTOR)   # always needed for spline_z / height
+        sp_z = _spl(s, z, SMOOTHENING_FACTOR)   # always needed for spline_z / height
         if d.get("slope_deg") is not None:
             # Reproduce the notebook: curvature from the slope, not from z. The
             # plane-fit methods store the slope as an *angle* (deg), so the
             # height gradient is dz/ds = tan(slope); the Frenet denominator uses
             # that ratio (1 + (dz/ds)^2), and the numerator is one derivative of it.
             dzds    = np.tan(np.radians(np.asarray(d["slope_deg"], float)[valid]))
-            sp_dzds = sc.make_splrep(s, dzds, s=SMOOTHENING_FACTOR)
+            sp_dzds = _spl(s, dzds, SMOOTHENING_FACTOR)
             d2zds2  = sp_dzds.derivative(nu=1)(s)
             kappa   = d2zds2 / (1.0 + dzds ** 2) ** 1.5       # signed: + valley, - crest
         else:
             dzds   = sp_z.derivative(nu=1)(s)
             d2zds2 = sp_z.derivative(nu=2)(s)
             kappa  = d2zds2 / (1.0 + dzds ** 2) ** 1.5        # signed curvature of a 2D curve z(s)
-        sp_k = sc.make_splrep(s, kappa, s=SMOOTHENING_FACTOR)
+        sp_k = _spl(s, kappa, SMOOTHENING_FACTOR)
 
         d["spline_z"]     = sp_z
         d["spline_kappa"] = sp_k
@@ -421,8 +432,8 @@ else:
         for method, d in store.items():
             z0 = float(d["spline_z"](0.0))   # height at s=0 in data-space (origin = start_cutoff)
             d["z"] = np.asarray(d["z"], float) - z0
-            d["spline_z"]     = sc.make_splrep(d["s"], d["z"],     s=SMOOTHENING_FACTOR)
-            d["spline_kappa"] = sc.make_splrep(d["s"], d["kappa"], s=SMOOTHENING_FACTOR)
+            d["spline_z"]     = _spl(d["s"], d["z"],     SMOOTHENING_FACTOR)
+            d["spline_kappa"] = _spl(d["s"], d["kappa"], SMOOTHENING_FACTOR)
             print(f"  [{label} – {method}]: z -= {z0:+.3f} m")
 
 
@@ -631,8 +642,8 @@ def build_profile_figure():
 
     # symlog keeps the log-like spread across orders of magnitude while still
     # showing the sign (+ valley / - crest); linear within ±linthresh around 0.
-    ax_k.set_yscale("symlog", linthresh=1e-2)
-    ax_k.set_ylim(-1.0, 1.0)
+    #ax_k.set_yscale("symlog", linthresh=1e-2)
+    ax_k.set_ylim(-0.1, 0.1)
     ax_k.axhline(0.0, color="0.5", lw=0.6, zorder=1)
 
     fig.tight_layout(rect=(0, 0, 0.72, 1.0))   # reserve the right ~28% for the legend
