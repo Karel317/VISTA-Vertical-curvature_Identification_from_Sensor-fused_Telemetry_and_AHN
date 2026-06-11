@@ -1,7 +1,0 @@
-- Results for McapDataloader Sequence rosbag_0_1779440660_30s_13772702157_1779440700_navsat_topic… -
-+-------------------+-------+-------+
-|            Metric | Value | Units |
-+===================+=======+=======+
-| Average Frequency |  34   | Hz    |
-|   Average Runtime |  29   | ms    |
-+-------------------+-------+-------+
