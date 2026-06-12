@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 # Physical-measurement results may be in a different timestamp folder than the
 # LiDAR/calculation results (they are run separately and saved under their own timestamp).
 VALIDATION_DIR   = r"D:\Validation_results\Physical_validation_data"   # physical meas .npz files
-CALCULATION_DIR  = r"D:\Validation_results\2026_05_22\10_35_55\1779438955"   # lidar/calculation .npz files
+CALCULATION_DIR  = r"D:\Validation_results\2026_05_22\10_36_01\1779438961"   # lidar/calculation .npz files
 
 # D:\Validation_results\2026_05_22\10_42_57\1779439377
 # D:\Validation_results\2026_05_22\10_44_36\1779439476
@@ -33,13 +33,13 @@ VALIDATION_PREFIXES = [
     #"Physical_meas_Sint_Jorispad_Brug",
     #"Physical_meas_Sint_Jorispad_Brug_backwards",
     "Physical_meas_Flat_25m",
-    #"Physical_meas_Proteus_Brug",
+    #"Physical_meas_Proteus_Brug_backwards",
     #"Physical_meas_Station_Brug",
     #"Physical_meas_Station_Brug_backwards"
 ]
 CALCULATION_PREFIXES = [
-    #"AHN5_DSM",
-    #"AHN5_DTM",
+    "AHN5_DSM",
+    "AHN5_DTM",
     "EKF_curvature_validation",
     "KISS_ICP",
     "Z_positional_tracking",
@@ -55,11 +55,11 @@ CALCULATION_PREFIXES = [
 THRESHOLD          = 0.1    # m   : |Δz| a threshold used in the comparison as a metric
 
 # ── General ───────────────────────────────────────────────────────────────────
-SMOOTHENING_FACTOR = 0.5        #       spline smoothing as a *per-point* budget:
+SMOOTHENING_FACTOR = 1.0        #       spline smoothing as a *per-point* budget:
                                 #       scipy's s is an absolute sum-of-squared-residuals
                                 #       budget, so the effective s = factor * N points
                                 #       (1.0 -> s == number of points; 0 = no smoothing)
-BOTTOM_LIMIT_KAPPA = 1e-8    # 1/m : lower y-limit for the (log-scaled) curvature plot
+BOTTOM_LIMIT_KAPPA = 1e-6    # 1/m : lower y-limit for the (log-scaled) curvature plot
 PHYS_MEAS_SUBSTR   = "Physical_meas"  # substring identifying the physical measurement profile
 
 # ── Evaluation window ─────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ WINDOW_FWD_M       = 20.0    # m   : fallback right edge (START_VALIDATION + thi
 # ── Per-method fine alignment (corrects the ~±1 m offset between methods) ──────
 FINE_ALIGN          = True
 FINE_ALIGN_FIELD    = "z"    #       score on elevation ("z", robust) or curvature ("kappa")
-FINE_ALIGN_SEARCH_M = 0.0    # m   : slide each method ±this many metres
+FINE_ALIGN_SEARCH_M = 1.0    # m   : slide each method ±this many metres
 FINE_ALIGN_STEP_M   = 0.02   # m   : search resolution
 FINE_ALIGN_W_MAE    = 0.5    #       score = W*MAE_norm + (1-W)*(1-correlation)
 
@@ -496,7 +496,7 @@ for vm, vd in results_validation.items():       # vm: validation method, vd: val
 # ── CSV export ────────────────────────────────────────────────────────────────
 raw_t    = results_calculation[next(iter(results_calculation))]["t"]
 t        = str(raw_t.flat[0]) if hasattr(raw_t, "flat") else str(raw_t)
-csv_path = os.path.join(r"D:\Validation_results\Statistics", f"{t}.csv")
+csv_path = os.path.join(r"D:\Validation_results\Statistics",f"{t}.csv")
 with open(csv_path, "w", newline="") as f:
     writer = csv.writer(f)
     writer.writerow(["Cross comparison (validation vs calculation)"])
@@ -642,8 +642,8 @@ def build_profile_figure():
 
     # symlog keeps the log-like spread across orders of magnitude while still
     # showing the sign (+ valley / - crest); linear within ±linthresh around 0.
-    #ax_k.set_yscale("symlog", linthresh=1e-2)
-    ax_k.set_ylim(-0.1, 0.1)
+    ax_k.set_yscale("symlog", linthresh=1e-2)
+    ax_k.set_ylim(-1, 1)
     ax_k.axhline(0.0, color="0.5", lw=0.6, zorder=1)
 
     fig.tight_layout(rect=(0, 0, 0.72, 1.0))   # reserve the right ~28% for the legend
