@@ -1,4 +1,4 @@
-# Dutch Hills Dataset - (NOG AANPASSEN, TE COMPLEX NU) Vertical-curvature Identification from Sensor-fused Telemetry and AHN (LiDAR, IMU, GPS, AHN)
+# Dutch Hills Dataset - Vertical-curvature Identification from Sensor-fused Telemetry and AHN (LiDAR, IMU, GPS, AHN)
 
 A Sensor-fused Telemetry and AHN-based curvature detection/calculation pipeline that compares vertical curvature calculation methods and builds the foundation to classify/detect curvature in datasets.
 
@@ -17,16 +17,15 @@ Traditional ground segmentation methods often assume a flat or near-flat ground 
 ## 📁 Repository Structure
 
 ```
-lidar-ground-segmentation/
-├── 1. Validation/                  # Scripts that validate the curvature calculation from "3. Curvature Calculation"
-├── 2. Filtering Methods/           # Ground segmentation methods for surfaces with vertical curvature
-├── 3. Curvature Calculation/       # Calculation methods that quantify vertical curvature
-├── Pictures                        # Pictures used in the READMEs
-├── Pipeline                        # Scripts that automate the calculation and validation processes
-├── Useful scripts                  # Useful scripts when working in this repository or pointclouds in general
-├── README.md
-├── environment.yml
-└── requirements.txt                # pip requirements
+Curvature Calculation/          # Calculation methods that quantify vertical curvature
+Filtering Methods/              # Ground segmentation methods for surfaces with vertical curvature
+Pictures                        # Pictures used in the READMEs
+Pipeline                        # Scripts that automate the calculation and validation processes
+Useful scripts                  # Useful scripts when working in this repository or pointclouds in general
+Validation/                     # Scripts that validate the curvature calculation from "3. Curvature Calculation"
+README.md
+environment.yml
+requirements.txt                # pip requirements
 ```
 
 
@@ -58,9 +57,7 @@ The dataset is produced with the help of the TUDelft SenseBike.
 
 ![SenseBike](https://github.com/Karel317/VERVE-Vertical-Curvature_Estimation_from_Fused_Roadway_Sensors/blob/main/Pictures/SenseBike.jpeg)
 
-This dataset is **not included** in this repository due to its size. Download it separately:
-
-The data is stored on a hard drive and the SenseBike, which are in the hands of the TU Delft Department of Cognitive Robotics.
+This dataset is **not included** in this repository or to be found online due to its size.
 
 ---
 
